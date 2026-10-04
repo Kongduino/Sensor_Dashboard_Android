@@ -287,6 +287,7 @@ Image App Icon
 		#tag EndImageSpecification
 	#tag EndImageRepresentation
 	#tag ImageRepresentation
+		PartialPath = Icons\android_36.png
 		#tag ImageSpecification
 			Comment = Android 36x36 Icon
 			Device = 1
@@ -298,6 +299,7 @@ Image App Icon
 		#tag EndImageSpecification
 	#tag EndImageRepresentation
 	#tag ImageRepresentation
+		PartialPath = Icons\android_48.png
 		#tag ImageSpecification
 			Comment = Android 48x48 Icon
 			Device = 1
@@ -309,6 +311,7 @@ Image App Icon
 		#tag EndImageSpecification
 	#tag EndImageRepresentation
 	#tag ImageRepresentation
+		PartialPath = Icons\android_72.png
 		#tag ImageSpecification
 			Comment = Android 72x72 Icon
 			Device = 1
@@ -320,6 +323,7 @@ Image App Icon
 		#tag EndImageSpecification
 	#tag EndImageRepresentation
 	#tag ImageRepresentation
+		PartialPath = Icons\android_96.png
 		#tag ImageSpecification
 			Comment = Android 96x96 Icon
 			Device = 1
@@ -331,6 +335,7 @@ Image App Icon
 		#tag EndImageSpecification
 	#tag EndImageRepresentation
 	#tag ImageRepresentation
+		PartialPath = Icons\android_144.png
 		#tag ImageSpecification
 			Comment = Android 144x144 Icon
 			Device = 1
@@ -342,6 +347,7 @@ Image App Icon
 		#tag EndImageSpecification
 	#tag EndImageRepresentation
 	#tag ImageRepresentation
+		PartialPath = Icons\android_192.png
 		#tag ImageSpecification
 			Comment = Android 192x192 Icon
 			Device = 1

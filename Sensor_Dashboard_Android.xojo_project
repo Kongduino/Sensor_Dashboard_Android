@@ -15,6 +15,7 @@ Class=SourceCard;SourceCard.xojo_code;&h0000000035F62FFF;&h0000000000000000;fals
 MobileScreen=HomeScreen;HomeScreen.xojo_code;&h0000000058B03FFF;&h0000000000000000;false
 MobileScreen=SettingsScreen;SettingsScreen.xojo_code;&h000000006D2E9FFF;&h0000000000000000;false
 MobileScreen=SourceScreen;SourceScreen.xojo_code;&h0000000027F84FFF;&h0000000000000000;false
+Class=TabStrip;TabStrip.xojo_code;&h0000000052E87FFF;&h0000000000000000;false
 Folder=Shared;Shared;&h000000005D3A1FFF;&h0000000000000000;false
 Module=ChartLook;Shared/ChartLook.xojo_code;&h000000002C4A7FFF;&h000000005D3A1FFF;false
 Class=SensorSeries;Shared/SensorSeries.xojo_code;&h000000004E61AFFF;&h000000005D3A1FFF;false

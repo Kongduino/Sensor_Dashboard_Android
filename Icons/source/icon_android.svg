@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+ <defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5CBF60"/><stop offset="1" stop-color="#1B6B2A"/></linearGradient>
+  <linearGradient id="fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.45"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0.04"/></linearGradient>
+ </defs>
+ <g transform="translate(-74.56 -74.56) scale(1.1456)">
+ <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#bg)"/>
+ <!-- mesh: three nodes and their links, with radio arcs -->
+ <g stroke="#FFFFFF" stroke-opacity="0.85" stroke-width="16" fill="none" stroke-linecap="round">
+  <line x1="300" y1="330" x2="470" y2="250"/><line x1="470" y1="250" x2="640" y2="320"/><line x1="300" y1="330" x2="640" y2="320"/>
+  <path d="M700 230 a110 110 0 0 1 60 95" stroke-opacity="0.7"/><path d="M730 175 a180 180 0 0 1 95 160" stroke-opacity="0.45"/>
+ </g>
+ <g fill="#FFFFFF"><circle cx="300" cy="330" r="34"/><circle cx="470" cy="250" r="34"/><circle cx="640" cy="320" r="34"/></g>
+ <g fill="#FF8A2B"><circle cx="300" cy="330" r="15"/><circle cx="470" cy="250" r="15"/><circle cx="640" cy="320" r="15"/></g>
+ <!-- the chart: a line over a soft area -->
+ <path d="M190 760 L330 640 L450 690 L590 520 L720 580 L834 450 L834 830 L190 830 Z" fill="url(#fill)"/>
+ <path d="M190 760 L330 640 L450 690 L590 520 L720 580 L834 450" stroke="#FFFFFF" stroke-width="34" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+ <g fill="#FFFFFF"><circle cx="330" cy="640" r="24"/><circle cx="590" cy="520" r="24"/><circle cx="834" cy="450" r="30"/></g>
+</g>
+</svg>

@@ -56,9 +56,10 @@ A source that was on when you left the app starts again the next time you open i
 
 - **Home**: one card per source, with its state (green connected, orange connecting or retrying, grey off, red a problem), what it follows, its latest reading, and its switch.
 - **Source screen**, opened from a card:
-  - **Node**: a filter and a node picker; tabs Temp, Humidity, Pressure, Map; **Request** asks the selected node for its readings (on the Map tab, its position). Nodes that have nothing new answer `NO_RESPONSE`, which the status line shows.
-  - **MQTT**: tabs Temp, Humidity, Pressure, Radio (RSSI and SNR), Map.
-  - **AQI**: tabs Temp and Humidity (both sensors, SEN55 and SCD40), CO2, VOC, PM.
+  - **Node**: a filter and a node picker; tabs °C, %, hPa, Map; **Request** asks the selected node for its readings (on the Map tab, its position). Nodes that have nothing new answer `NO_RESPONSE`, which the status line shows.
+  - **MQTT**: tabs °C, %, hPa, RSSI (RSSI and SNR), Map.
+  - **AQI**: tabs °C and % (both sensors, SEN55 and SCD40), CO₂, VOC, PM.
+  - The tabs share the screen's width, so they fit on a phone as well as a tablet.
   - **Settings** in the toolbar opens the source's settings.
 - The screen stays on while a source is on: the app collects data only while it's in the foreground.
 
@@ -100,6 +101,8 @@ SourceScreen.xojo_code        a source's tabs, charts, map, Request and Share
 SettingsScreen.xojo_code      a source's settings
 MobileSensorChart.xojo_code   the chart control (touch)
 MobileMapView.xojo_code       the map control (touch, pinch)
+TabStrip.xojo_code            the tab bar (tabs share its width)
+Icons/                        the app icon: PNGs and their SVG sources
 Shared/                       the code shared with the desktop app, kept identical to Sensor_Dashboard/Shared
 Library/                      MQTT_Xojo's library, kept identical to MQTT_Xojo/Library
 LICENSE                       GPL-3.0

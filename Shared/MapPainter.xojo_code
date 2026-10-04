@@ -72,8 +72,7 @@ Protected Class MapPainter
 		  mQueue.RemoveAt(0)
 		  Dim f As FolderItem = CacheFile(mFetching, True)
 		  If f = Nil Then
-		    If mFailed = Nil Then mFailed = New Dictionary
-		    mFailed.Value(mFetching) = True
+		    MarkFailed(mFetching, "no cache folder")
 		    mFetching = ""
 		    Return
 		  End If
@@ -162,6 +161,16 @@ Protected Class MapPainter
 	#tag EndMethod
 
 	#tag Method, Flags = &h21
+		Private Sub MarkFailed(key As String, reason As String)
+		  // A tile that couldn't be fetched: not asked for again before kRetrySeconds, and logged with the reason
+		  If mFailed = Nil Then mFailed = New Dictionary
+		  Dim nowSecs As Double = DateTime.Now().SecondsFrom1970
+		  mFailed.Value(key) = nowSecs
+		  LogEvents("Map", "Tile " + key + " not loaded: " + reason)
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
 		Private Function MinusRect() As Rect
 		  Return New Rect(10, 10 + 34 * ControlScale, 32 * ControlScale, 30 * ControlScale)
 		End Function
@@ -195,10 +204,9 @@ Protected Class MapPainter
 
 	#tag Method, Flags = &h21
 		Private Sub TileError(sender As URLConnection, e As RuntimeException)
-		  // No network, for example: this tile isn't asked for again in this session
+		  // No network, for example: the tile is asked for again after kRetrySeconds
 		  mBusy = False
-		  If mFailed = Nil Then mFailed = New Dictionary
-		  mFailed.Value(mFetching) = True
+		  MarkFailed(mFetching, "error " + Str(e.ErrorNumber) + " " + e.Message)
 		  mFetching = ""
 		  FetchNext()
 		End Sub
@@ -219,8 +227,7 @@ Protected Class MapPainter
 		    End Try
 		  End If
 		  If p = Nil Then
-		    If mFailed = Nil Then mFailed = New Dictionary
-		    mFailed.Value(key) = True
+		    MarkFailed(key, "HTTP " + Str(HTTPStatus) + If(HTTPStatus = 200, ", not a picture", ""))
 		    Try
 		      If file <> Nil And file.Exists Then file.Remove()
 		    Catch eRemove As RuntimeException
@@ -530,7 +537,15 @@ Protected Class MapPainter
 		    Dim cached As Picture = mTiles.Value(key)
 		    Return cached
 		  End If
-		  If mFailed <> Nil And mFailed.HasKey(key) Then Return Nil
+		  // A tile that failed is asked for again once kRetrySeconds have passed (a connection that came up late, a busy server)
+		  If mFailed <> Nil Then
+		    If mFailed.HasKey(key) Then
+		      Dim failedAt As Double = mFailed.Value(key)
+		      Dim nowSecs As Double = DateTime.Now().SecondsFrom1970
+		      If nowSecs - failedAt < kRetrySeconds Then Return Nil
+		      mFailed.Remove(key)
+		    End If
+		  End If
 		  Dim f As FolderItem = CacheFile(key, False)
 		  If f <> Nil And f.Exists Then
 		    Try
@@ -657,6 +672,9 @@ Protected Class MapPainter
 		Private mZoom As Integer
 	#tag EndProperty
 
+
+	#tag Constant, Name = kRetrySeconds, Type = Double, Dynamic = False, Default = \"120", Scope = Private
+	#tag EndConstant
 
 	#tag Constant, Name = kMinZoom, Type = Double, Dynamic = False, Default = \"2", Scope = Private
 	#tag EndConstant

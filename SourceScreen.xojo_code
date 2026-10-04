@@ -97,22 +97,18 @@ Begin MobileScreen SourceScreen
       Visible         =   True
       Width           =   328
    End
-   Begin MobileSegmentedButton TabBar
+   Begin TabStrip TabBar
       AccessibilityHint=   ""
       AccessibilityLabel=   ""
       Enabled         =   True
       Height          =   40
-      LastSegmentIndex=   0
       Left            =   16
       LockBottom      =   False
+      LockedInPosition=   False
       LockLeft        =   True
       LockRight       =   True
       LockTop         =   True
-      LockedInPosition=   False
       Scope           =   2
-      SegmentCount    =   0
-      Segments        =   ""
-      SelectedSegmentIndex=   0
       Top             =   108
       Visible         =   True
       Width           =   328
@@ -177,27 +173,34 @@ End
 		Sub Opening()
 		  // The source's charts (and map): Kind is "device" (a Meshtastic node), "mqtt" or "aqi". The data lives in the Hub:
 		  // leaving this screen doesn't stop anything
-		  Dim tabList As String
+		  // Short tab captions, so that 5 fit on a phone (Android sizes the segments by their text); fileList names the
+		  // shared picture of each tab (no ° or % in a file name)
+		  Dim tabList, fileList As String
 		  Select Case Kind
 		  Case "mqtt"
-		    Self.Title = "MQTT feed"
-		    tabList = "Temp,Humidity,Pressure,Radio,Map"
+		    Self.Title = "MQTT"
+		    tabList = "°C,%,hPa,RSSI,Map"
+		    fileList = "Temp,Humidity,Pressure,Radio,Map"
 		    AddHandler Hub.MQTT.Changed, WeakAddressOf MQTTChanged
 		  Case "aqi"
-		    Self.Title = "M5Stack AQI"
-		    tabList = "Temp,Humidity,CO2,VOC,PM"
+		    Self.Title = "AQI"
+		    tabList = "°C,%,CO₂,VOC,PM"
+		    fileList = "Temp,Humidity,CO2,VOC,PM"
 		    AddHandler Hub.AQI.Changed, WeakAddressOf AQIChanged
 		  Else
-		    Self.Title = "Meshtastic node"
-		    tabList = "Temp,Humidity,Pressure,Map"
+		    Self.Title = "Node"
+		    tabList = "°C,%,hPa,Map"
+		    fileList = "Temp,Humidity,Pressure,Map"
 		    Self.NavigationToolbar.AddButton(New MobileToolbarButton(MobileToolbarButton.Types.Plain, "Request"))
 		    AddHandler Hub.Node.Changed, WeakAddressOf NodeChanged
 		  End Select
 		  Self.NavigationToolbar.AddButton(New MobileToolbarButton(MobileToolbarButton.Types.Plain, "Share"))
 		  Self.NavigationToolbar.AddButton(New MobileToolbarButton(MobileToolbarButton.Types.Plain, "Settings"))
 		  For Each tabName As String In tabList.Split(",")
-		    mTabNames.Add(tabName)
-		    TabBar.AddSegment(New MobileSegment(tabName))
+		    TabBar.AddTab(tabName)
+		  Next
+		  For Each fileName As String In fileList.Split(",")
+		    mTabNames.Add(fileName)
 		  Next
 		  If Kind = "device" Then
 		    FillNodeMenu()
@@ -435,6 +438,7 @@ End
 		Private Sub ShowTab(tabIndex As Integer)
 		  // The chart with the tab's series, or the map
 		  mTab = tabIndex
+		  TabBar.SelectTab(tabIndex)
 		  Dim info As String = InfoText()
 		  InfoLabel.Text = info
 		  If tabIndex = MapTab() Then
@@ -604,8 +608,8 @@ End
 #tag EndEvents
 #tag Events TabBar
 	#tag Event
-		Sub Pressed(segmentedIndex As Integer)
-		  ShowTab(segmentedIndex)
+		Sub Pressed(tabIndex As Integer)
+		  ShowTab(tabIndex)
 		End Sub
 	#tag EndEvent
 #tag EndEvents

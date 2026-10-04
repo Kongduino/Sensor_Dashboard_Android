@@ -1,3 +1,6 @@
 # The project file's KeyStoreFile line (a local path to the signing keystore) is blanked in what is committed;
 # the working copy keeps it. Filter defined in .git/config (filter.keystore)
 *.xojo_project filter=keystore
+# Icon images: the absolute FullPath / SaveInfo lines Xojo writes are dropped from what is committed;
+# PartialPath (relative) is enough to find the PNGs in a clone
+*.xojo_image filter=imagepaths
