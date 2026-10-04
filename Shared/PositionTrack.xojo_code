@@ -3,12 +3,14 @@ Protected Class PositionTrack
 	#tag Note, Name = About
 		The positions of one node, in time order: what the Map tab draws. Parallel arrays: Times (seconds),
 		Lats / Lons (degrees), Alts (m, 0 if unknown), Precisions (precision_bits: 32 exact, less = rounded on
-		purpose), SatCounts (0 if unknown), Rssis (dBm) and Snrs (dB) as received (-255 if unknown).
+		purpose), SatCounts (0 if unknown), Rssis (dBm) and Snrs (dB) as received (-255 if unknown), Hops (hops the packet
+		took to the receiving node, -1 if unknown) and ViaMQTTs (it got the packet from MQTT). RSSI / SNR describe the
+		link to the node only when HeardDirectly.
 	#tag EndNote
 
 
 	#tag Method, Flags = &h0
-		Sub Add(ts As Integer, lat As Double, lon As Double, alt As Integer, precision As Integer, sats As Integer, rssi As Integer = -255, snr As Double = -255)
+		Sub Add(ts As Integer, lat As Double, lon As Double, alt As Integer, precision As Integer, sats As Integer, rssi As Integer = -255, snr As Double = -255, hopCount As Integer = -1, viaMQTT As Boolean = False)
 		  // One position, kept in time order; a position with the same time as one already held is ignored.
 		  // Only the latest kMaxPositions are kept
 		  Dim i As Integer = Times.Count
@@ -24,6 +26,8 @@ Protected Class PositionTrack
 		  SatCounts.AddAt(i, sats)
 		  Rssis.AddAt(i, rssi)
 		  Snrs.AddAt(i, snr)
+		  Hops.AddAt(i, hopCount)
+		  ViaMQTTs.AddAt(i, viaMQTT)
 		  While Times.Count > kMaxPositions
 		    Times.RemoveAt(0)
 		    Lats.RemoveAt(0)
@@ -33,6 +37,8 @@ Protected Class PositionTrack
 		    SatCounts.RemoveAt(0)
 		    Rssis.RemoveAt(0)
 		    Snrs.RemoveAt(0)
+		    Hops.RemoveAt(0)
+		    ViaMQTTs.RemoveAt(0)
 		  Wend
 		End Sub
 	#tag EndMethod
@@ -47,6 +53,8 @@ Protected Class PositionTrack
 		  SatCounts.RemoveAll
 		  Rssis.RemoveAll
 		  Snrs.RemoveAll
+		  Hops.RemoveAll
+		  ViaMQTTs.RemoveAll
 		End Sub
 	#tag EndMethod
 
@@ -65,11 +73,40 @@ Protected Class PositionTrack
 		  While Not rs.AfterLastRow
 		    Add(rs.Column("timestamp").IntegerValue, rs.Column("latitude").DoubleValue, rs.Column("longitude").DoubleValue, _
 		    rs.Column("altitude").IntegerValue, rs.Column("precisionBits").IntegerValue, rs.Column("sats").IntegerValue, _
-		    RadioValue(rs, "rssi"), RadioValue(rs, "snr"))
+		    RadioValue(rs, "rssi"), RadioValue(rs, "snr"), HopsValue(rs), rs.Column("viaMQTT").IntegerValue = 1)
 		    n = n + 1
 		    rs.MoveToNextRow()
 		  Wend
 		  Return n
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Function HeardDirectly(i As Integer) As Boolean
+		  // Position i came straight from the node by radio, so its RSSI / SNR describe that link
+		  Return Hops(i) = 0 And Not ViaMQTTs(i)
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
+		Private Function HopsValue(rs As RowSet) As Integer
+		  // hops of a stored position: -1 when unknown (NULL, also in rows stored before the column existed)
+		  If rs.Column("hops").Value.IsNull Then Return -1
+		  Return rs.Column("hops").IntegerValue
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Function HowReceived(i As Integer) As String
+		  // "RSSI -97 dBm  ·  SNR 6.2 dB" for a position heard directly, else how it came: "relayed, 2 hops",
+		  // "via MQTT", "hops unknown"; "" when there is nothing to say (the receiving node's own position)
+		  If ViaMQTTs(i) Then Return "via MQTT"
+		  If Hops(i) > 0 Then Return "relayed, " + Str(Hops(i)) + If(Hops(i) = 1, " hop", " hops")
+		  Dim radio As String
+		  If Rssis(i) <> -255 Then radio = "RSSI " + Str(Rssis(i)) + " dBm"
+		  If Snrs(i) <> -255 Then radio = radio + If(radio = "", "", "  ·  ") + "SNR " + FormatValue(Snrs(i), "-0.0") + " dB"
+		  If radio <> "" And Hops(i) < 0 Then radio = radio + "  ·  hops unknown"
+		  Return radio
 		End Function
 	#tag EndMethod
 
@@ -90,8 +127,8 @@ Protected Class PositionTrack
 		  "  ·  " + FormatValue(Lats(last), "-0.0000") + ", " + FormatValue(Lons(last), "-0.0000")
 		  If Alts(last) <> 0 Then t = t + "  ·  " + Str(Alts(last)) + " m"
 		  If SatCounts(last) > 0 Then t = t + "  ·  " + Str(SatCounts(last)) + " sats"
-		  If Rssis(last) <> -255 Then t = t + "  ·  RSSI " + Str(Rssis(last)) + " dBm"
-		  If Snrs(last) <> -255 Then t = t + "  ·  SNR " + FormatValue(Snrs(last), "-0.0") + " dB"
+		  Dim how As String = HowReceived(last)
+		  If how <> "" Then t = t + "  ·  " + how
 		  If Precisions(last) > 0 And Precisions(last) < 32 Then t = t + "  ·  approximate (" + Str(Precisions(last)) + " bits)"
 		  Return t
 		End Function
@@ -100,6 +137,10 @@ Protected Class PositionTrack
 
 	#tag Property, Flags = &h0
 		Alts() As Integer
+	#tag EndProperty
+
+	#tag Property, Flags = &h0
+		Hops() As Integer
 	#tag EndProperty
 
 	#tag Property, Flags = &h0
@@ -128,6 +169,10 @@ Protected Class PositionTrack
 
 	#tag Property, Flags = &h0
 		Times() As Integer
+	#tag EndProperty
+
+	#tag Property, Flags = &h0
+		ViaMQTTs() As Boolean
 	#tag EndProperty
 
 

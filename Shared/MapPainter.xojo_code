@@ -369,9 +369,7 @@ Protected Class MapPainter
 		  If Track.SatCounts(i) > 0 Then extra = extra + If(extra = "", "", "  ·  ") + Str(Track.SatCounts(i)) + " sats"
 		  If Track.Precisions(i) > 0 And Track.Precisions(i) < 32 Then extra = extra + If(extra = "", "", "  ·  ") + "approximate"
 		  If extra <> "" Then lines.Add extra
-		  Dim radio As String
-		  If Track.Rssis(i) <> -255 Then radio = "RSSI " + Str(Track.Rssis(i)) + " dBm"
-		  If Track.Snrs(i) <> -255 Then radio = radio + If(radio = "", "", "  ·  ") + "SNR " + FormatValue(Track.Snrs(i), "-0.0") + " dB"
+		  Dim radio As String = Track.HowReceived(i)
 		  If radio <> "" Then lines.Add radio
 		  SetTextSize(g, 12, False)
 		  Dim boxWidth As Double

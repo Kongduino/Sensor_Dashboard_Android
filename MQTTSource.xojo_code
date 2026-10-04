@@ -247,8 +247,19 @@ Protected Class MQTTSource
 		  Dim temp As Double = payload.Lookup("temperature", -255).DoubleValue
 		  Dim rh As Double = payload.Lookup("relative_humidity", -255).DoubleValue
 		  Dim pa As Double = payload.Lookup("barometric_pressure", -255).DoubleValue
-		  UpdateData(rssi, snr, temp, rh, pa, TS)
-		  LogTelemetry(2, Format(NodeNumber(fromNum), "0"), senderID, Str(TS), payload.ToString(), rssi, snr, MySessionNum)
+		  // Stored as received, with the hops; charted only for a packet the gateway heard directly (see IsDirect)
+		  Dim hops, hopStart, relayNode As Integer
+		  Dim viaMQTT As Boolean
+		  MeshLastPacketRadio(hops, hopStart, relayNode, viaMQTT) // how this packet reached the gateway / node
+		  Dim direct As Boolean = IsDirect(hops, viaMQTT)
+		  Dim chartRssi As Double = -255
+		  Dim chartSnr As Double = -255
+		  If direct Then
+		    chartRssi = rssi
+		    chartSnr = snr
+		  End If
+		  UpdateData(chartRssi, chartSnr, temp, rh, pa, TS)
+		  LogTelemetry(2, Format(NodeNumber(fromNum), "0"), senderID, Str(TS), payload.ToString(), rssi, snr, MySessionNum, hops, hopStart, relayNode, viaMQTT)
 		  RaiseEvent Changed
 		End Sub
 	#tag EndMethod
@@ -266,8 +277,11 @@ Protected Class MQTTSource
 		  Dim gatewayNum As Int64 = HexValue(mFeedID)
 		  Dim rssi As Integer = js.Lookup("rssi", -255).IntegerValue
 		  Dim snr As Double = js.Lookup("snr", -255).DoubleValue
-		  LogPosition(NodeNumber(fromNum), gatewayNum, ts, lat, lon, alt, precision, sats, rssi, snr)
-		  Track().Add(ts, lat, lon, alt, precision, sats, rssi, snr)
+		  Dim hops, hopStart, relayNode As Integer
+		  Dim viaMQTT As Boolean
+		  MeshLastPacketRadio(hops, hopStart, relayNode, viaMQTT) // how this packet reached the gateway / node
+		  LogPosition(NodeNumber(fromNum), gatewayNum, ts, lat, lon, alt, precision, sats, rssi, snr, hops, hopStart, relayNode, viaMQTT)
+		  Track().Add(ts, lat, lon, alt, precision, sats, rssi, snr, hops, viaMQTT)
 		  RaiseEvent Changed
 		End Sub
 	#tag EndMethod

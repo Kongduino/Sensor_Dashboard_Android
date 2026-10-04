@@ -35,7 +35,7 @@ An M5Stack AQI device on a tablet: the temperature of its two sensors, CO₂, an
   - a **Meshtastic MQTT feed** (the packets one gateway uploads), decrypted with your channel keys
   - a **Meshtastic node** on your network, over TCP (port 4403)
   - an **M5Stack AQI** device, through M5Stack's ezdata service
-- **Charts** with a time axis and a fitted Y axis: temperature, humidity and pressure; the radio (RSSI / SNR) of an MQTT feed; CO2, VOC and particulate matter (as bars) for the AQI. Tap a chart, or slide along it, to read a sample's values.
+- **Charts** with a time axis and a fitted Y axis: temperature, humidity and pressure; the radio (RSSI / SNR) of an MQTT feed, for packets the gateway heard directly (a relayed packet's values describe the last relay, so only its hop count is kept); CO2, VOC and particulate matter (as bars) for the AQI. Tap a chart, or slide along it, to read a sample's values.
 - **A map** of a node's positions on OpenStreetMap: drag, pinch, double-tap, and the +/−/Fit buttons; tap a point for its time, coordinates, altitude, satellites and reception.
 - **Storage** in a local SQLite database, so the charts start with earlier readings.
 - **Sharing**: the readings (CSV), the positions (CSV and GPX) and the chart or map (PNG), through Android's share sheet.

@@ -464,6 +464,8 @@ Protected Module MeshDecode
 		  Dim rxRssi As Int32
 		  Dim pkiEncrypted As Boolean
 		  Dim wantAck As Boolean
+		  Dim viaMQTT As Boolean
+		  Dim relayNode, transport As UInt32
 		  Dim portnum As Integer = -1
 		  Dim dataPayload As String
 		  Dim requestID As UInt32
@@ -512,11 +514,31 @@ Protected Module MeshDecode
 		    Case 10 // want_ack
 		      If wireType <> 0 Then Return ""
 		      wantAck = (packet.ReadVarint() <> 0)
+		    Case 14 // via_mqtt
+		      If wireType <> 0 Then Return ""
+		      viaMQTT = (packet.ReadVarint() <> 0)
+		    Case 19, 21 // relay_node (the last byte of the node that transmitted it last), transport_mechanism
+		      If wireType <> 0 Then Return ""
+		      Dim v2 As UInt32 = CType(packet.ReadVarint(), UInt32)
+		      If field = 19 Then
+		        relayNode = v2
+		      Else
+		        transport = v2
+		      End If
 		    Else
 		      packet.Skip(wireType)
 		    End Select
 		  Wend
 		  If packet.Failed Then Return ""
+		  // Remembered for the app (MeshLastPacketRadio): how this packet reached the node that reported it
+		  Dim hs As Integer = hopStart // as Integers first (Android)
+		  Dim hl As Integer = hopLimit
+		  Dim rn As Integer = relayNode
+		  mLastHops = -1
+		  If hs > 0 And hl <= hs Then mLastHops = hs - hl
+		  mLastHopStart = hs
+		  mLastRelayNode = rn
+		  mLastViaMQTT = viaMQTT Or transport = 5 // TRANSPORT_MQTT
 		  
 		  // Encrypted: try the configured channel keys (see MeshAddChannel)
 		  Dim decrypted As Boolean
@@ -988,6 +1010,20 @@ Protected Module MeshDecode
 	#tag EndMethod
 
 	#tag Method, Flags = &h0
+		Sub MeshLastPacketRadio(ByRef hops As Integer, ByRef hopStart As Integer, ByRef relayNode As Integer, ByRef viaMQTT As Boolean)
+		  // How the packet last decoded by MeshPacketSummary reached the node that reported it (the MQTT gateway, or the
+		  // connected node): hops = hop_start - hop_limit, 0 for a packet heard directly, -1 when unknown (firmware before
+		  // 2.3 sends no hop_start); relayNode = the last byte of the node that transmitted it last: the relay, or the sender
+		  // itself for a direct packet (0 when unknown, firmware 2.6+); viaMQTT = the node got it from MQTT, not by radio. RSSI / SNR describe the link to the sender only when
+		  // hops = 0 and Not viaMQTT. Kept out of the JSON, which stays identical to the converter's
+		  hops = mLastHops
+		  hopStart = mLastHopStart
+		  relayNode = mLastRelayNode
+		  viaMQTT = mLastViaMQTT
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
 		Function MeshTakeRouting(ByRef requestID As UInt32, ByRef fromNode As UInt32, ByRef toNode As UInt32, ByRef errorCode As Integer) As Boolean
 		  // After MeshPacketSummary: True (once) when the packet was a ROUTING ACK / NAK for packet requestID
 		  If Not mRoutingValid Then Return False
@@ -1238,6 +1274,22 @@ Protected Module MeshDecode
 
 	#tag Property, Flags = &h21
 		Private mAckRequestValid As Boolean
+	#tag EndProperty
+
+	#tag Property, Flags = &h21
+		Private mLastHops As Integer = -1
+	#tag EndProperty
+
+	#tag Property, Flags = &h21
+		Private mLastHopStart As Integer
+	#tag EndProperty
+
+	#tag Property, Flags = &h21
+		Private mLastRelayNode As Integer
+	#tag EndProperty
+
+	#tag Property, Flags = &h21
+		Private mLastViaMQTT As Boolean
 	#tag EndProperty
 
 	#tag Property, Flags = &h21

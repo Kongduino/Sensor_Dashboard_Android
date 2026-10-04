@@ -145,21 +145,26 @@ Protected Module SensorData
 		  Catch eRepair As DatabaseException
 		    LogEvents("OpenDatabase", "Repair: " + eRepair.Message)
 		  End Try
-		  // rssi / snr came later: added to a table created before them. The existing columns are asked first rather than
-		  // relying on the "duplicate column" error (the debugger stops on it, and Android may raise another exception type)
-		  Dim existing() As String
-		  Dim info As RowSet = MySensordb.SelectSQL("PRAGMA table_info(positions);")
-		  While Not info.AfterLastRow
-		    existing.Add(info.Column("name").StringValue.Lowercase)
-		    info.MoveToNextRow()
-		  Wend
-		  Dim radioNames() As String = Array("rssi", "snr")
-		  Dim radioTypes() As String = Array("INTEGER", "REAL")
-		  For i As Integer = 0 To radioNames.LastIndex
-		    If existing.IndexOf(radioNames(i)) < 0 Then
-		      MySensordb.ExecuteSQL("ALTER TABLE positions ADD COLUMN " + radioNames(i) + " " + radioTypes(i) + ";")
-		      LogEvents("OpenDatabase", "Column positions." + radioNames(i) + " added")
-		    End If
+		  // Columns that came later, added to tables created before them: rssi / snr (positions), then how a packet reached
+		  // the gateway or connected node (both tables): hops (NULL when unknown), hopStart, relayNode, viaMQTT (see
+		  // MeshLastPacketRadio). The existing columns are asked first rather than relying on the "duplicate column" error
+		  // (the debugger stops on it, and Android may raise another exception type)
+		  Dim tables() As String = Array("positions", "telemetry")
+		  Dim radioNames() As String = Array("rssi", "snr", "hops", "hopStart", "relayNode", "viaMQTT")
+		  Dim radioTypes() As String = Array("INTEGER", "REAL", "INTEGER", "INTEGER", "INTEGER", "INTEGER")
+		  For Each table As String In tables
+		    Dim existing() As String
+		    Dim info As RowSet = MySensordb.SelectSQL("PRAGMA table_info(" + table + ");")
+		    While Not info.AfterLastRow
+		      existing.Add(info.Column("name").StringValue.Lowercase)
+		      info.MoveToNextRow()
+		    Wend
+		    For i As Integer = 0 To radioNames.LastIndex
+		      If existing.IndexOf(radioNames(i).Lowercase) < 0 Then
+		        MySensordb.ExecuteSQL("ALTER TABLE " + table + " ADD COLUMN " + radioNames(i) + " " + radioTypes(i) + ";")
+		        LogEvents("OpenDatabase", "Column " + table + "." + radioNames(i) + " added")
+		      End If
+		    Next
 		  Next
 		  Return True
 		End Function
@@ -195,16 +200,19 @@ Protected Module SensorData
 	#tag EndMethod
 
 	#tag Method, Flags = &h0
-		Sub LogTelemetry(logType As Integer, fromID As String, senderID As String, TS As String, payload As String, rssi As Double, snr As Double, sessionID As Integer)
+		Sub LogTelemetry(logType As Integer, fromID As String, senderID As String, TS As String, payload As String, rssi As Double, snr As Double, sessionID As Integer, hops As Integer = -1, hopStart As Integer = 0, relayNode As Integer = 0, viaMQTT As Boolean = False)
+		  // One reading in the telemetry table. rssi / snr: -255 when unknown; hops ... viaMQTT: how the packet reached
+		  // the gateway or connected node (see MeshLastPacketRadio; hops -1 = unknown, stored as NULL)
 		  Dim cmd, pl As String
 		  Dim rs As Integer
 		  rs = rssi
 		  
 		  pl = payload.ReplaceAllBytes("""", "'")
 		  
-		  cmd = "INSERT INTO telemetry(logType, sessionID, timestamp, fromID, senderID, rssi, snr, payload)" + _
+		  cmd = "INSERT INTO telemetry(logType, sessionID, timestamp, fromID, senderID, rssi, snr, payload, hops, hopStart, relayNode, viaMQTT)" + _
 		  " VALUES (" + Str(logType) + ", " + Str(sessionID) + ", " + TS + ", " + fromID + ", " + _
-		  senderID + ", " + FormatValue(rs, "-0") + ", " + FormatValue(snr, "-0.00") + ", """ + pl + """);"
+		  senderID + ", " + FormatValue(rs, "-0") + ", " + FormatValue(snr, "-0.00") + ", """ + pl + """, " + _
+		  HopsSQL(hops, hopStart, relayNode, viaMQTT) + ");"
 		  
 		  LogEvents "LogTelemetry", cmd
 		  MySensordb.ExecuteSQL(cmd)
@@ -213,13 +221,14 @@ Protected Module SensorData
 	#tag EndMethod
 
 	#tag Method, Flags = &h0
-		Sub LogPosition(fromID As Int64, senderID As Int64, ts As Integer, lat As Double, lon As Double, alt As Integer, precision As Integer, sats As Integer, rssi As Integer = -255, snr As Double = -255)
+		Sub LogPosition(fromID As Int64, senderID As Int64, ts As Integer, lat As Double, lon As Double, alt As Integer, precision As Integer, sats As Integer, rssi As Integer = -255, snr As Double = -255, hops As Integer = -1, hopStart As Integer = 0, relayNode As Integer = 0, viaMQTT As Boolean = False)
 		  // One position in the positions table (fromID: the node, senderID: the gateway or connected node;
-		  // rssi / snr as the gateway or connected node received it, -255 when unknown, e.g. its own packets)
-		  Dim cmd As String = "INSERT INTO positions(sessionID, timestamp, fromID, senderID, latitude, longitude, altitude, precisionBits, sats, rssi, snr) VALUES (" + _
+		  // rssi / snr as the gateway or connected node received it, -255 when unknown, e.g. its own packets;
+		  // hops ... viaMQTT: how the packet reached it, see LogTelemetry)
+		  Dim cmd As String = "INSERT INTO positions(sessionID, timestamp, fromID, senderID, latitude, longitude, altitude, precisionBits, sats, rssi, snr, hops, hopStart, relayNode, viaMQTT) VALUES (" + _
 		  Str(MySessionNum) + ", " + Str(ts) + ", " + Format(fromID, "0") + ", " + Format(senderID, "0") + ", " + _
 		  FormatValue(lat, "-0.0000000") + ", " + FormatValue(lon, "-0.0000000") + ", " + Str(alt) + ", " + Str(precision) + ", " + Str(sats) + ", " + _
-		  Str(rssi) + ", " + FormatValue(snr, "-0.00") + ");"
+		  Str(rssi) + ", " + FormatValue(snr, "-0.00") + ", " + HopsSQL(hops, hopStart, relayNode, viaMQTT) + ");"
 		  LogEvents "LogPosition", cmd
 		  Try
 		    MySensordb.ExecuteSQL(cmd)
@@ -227,6 +236,22 @@ Protected Module SensorData
 		    LogEvents "LogPosition", "Database error: " + e.Message
 		  End Try
 		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Function HopsSQL(hops As Integer, hopStart As Integer, relayNode As Integer, viaMQTT As Boolean) As String
+		  // The hops, hopStart, relayNode, viaMQTT values of an INSERT: hops -1 (unknown) is NULL
+		  Dim h As String = "NULL"
+		  If hops >= 0 Then h = Str(hops)
+		  Return h + ", " + Str(hopStart) + ", " + Str(relayNode) + ", " + If(viaMQTT, "1", "0")
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Function IsDirect(hops As Integer, viaMQTT As Boolean) As Boolean
+		  // RSSI / SNR describe the link to the sender only for a packet heard directly by radio
+		  Return hops = 0 And Not viaMQTT
+		End Function
 	#tag EndMethod
 
 	#tag Method, Flags = &h0
@@ -238,7 +263,10 @@ Protected Module SensorData
 		  If fromID >= 0 Then cond = cond + " AND fromID=" + Format(fromID, "0")
 		  If senderID >= 0 Then cond = cond + " AND senderID=" + Format(senderID, "0")
 		  If before > 0 Then cond = cond + " AND timestamp<" + Format(before, "0")
-		  Dim cmd As String = "select * from (select timestamp, payload, rssi, snr from telemetry where " + cond + _
+		  // rssi / snr only for packets heard directly (-255 otherwise, as for unknown hops: see IsDirect)
+		  Dim cmd As String = "select * from (select timestamp, payload, " + _
+		  "CASE WHEN hops = 0 AND viaMQTT = 0 THEN rssi ELSE -255 END AS rssi, " + _
+		  "CASE WHEN hops = 0 AND viaMQTT = 0 THEN snr ELSE -255 END AS snr from telemetry where " + cond + _
 		  " group by timestamp order by timestamp desc limit 100) order by timestamp;"
 		  LogEvents "HistoryRows", cmd
 		  Try
@@ -254,7 +282,7 @@ Protected Module SensorData
 		Function PositionRows(fromID As Int64) As RowSet
 		  // The node's latest stored positions (every session, at most PositionTrack.kMaxPositions), oldest first;
 		  // a position stored twice (the same time) comes once
-		  Dim cmd As String = "select * from (select timestamp, latitude, longitude, altitude, precisionBits, sats, rssi, snr from positions " + _
+		  Dim cmd As String = "select * from (select timestamp, latitude, longitude, altitude, precisionBits, sats, rssi, snr, hops, viaMQTT from positions " + _
 		  "where fromID=" + Format(fromID, "0") + " group by timestamp order by timestamp desc limit 500) order by timestamp;"
 		  Try
 		    Return MySensordb.SelectSQL(cmd)
@@ -492,6 +520,9 @@ Protected Module SensorData
 		    t.Add "gateway"
 		    t.Add "rssi"
 		    t.Add "snr"
+		    t.Add "hops"
+		    t.Add "relay_node"
+		    t.Add "via_mqtt"
 		  End If
 		  For Each k As String In keys
 		    t.Add k
@@ -516,6 +547,20 @@ Protected Module SensorData
 		      Else
 		        t.Add FormatValue(rs.Column("snr").DoubleValue, "-0.00")
 		      End If
+		      // How the packet reached the gateway: rssi / snr describe the sender's link only when hops is 0 and via_mqtt 0.
+		      // relay_node is the last byte of the relaying node, in hex
+		      If rs.Column("hops").Value.IsNull Then
+		        t.Add ""
+		      Else
+		        t.Add rs.Column("hops").StringValue
+		      End If
+		      Dim relay As Integer = rs.Column("relayNode").IntegerValue
+		      If relay = 0 Then
+		        t.Add ""
+		      Else
+		        t.Add HexText(relay, 2).Lowercase
+		      End If
+		      t.Add If(rs.Column("viaMQTT").IntegerValue = 1, "1", "0")
 		    End If
 		    Dim rowPL As JSONItem = RowPayload(rs)
 		    For Each k As String In keys
@@ -537,7 +582,7 @@ Protected Module SensorData
 		  // The positions of a track as ";"-separated text, oldest first (an IOException goes to the caller)
 		  If f.Exists Then f.Remove()
 		  Dim tos As TextOutputStream = TextOutputStream.Create(f)
-		  tos.WriteLine("timestamp;latitude;longitude;altitude;precision_bits;sats;rssi;snr")
+		  tos.WriteLine("timestamp;latitude;longitude;altitude;precision_bits;sats;rssi;snr;hops;via_mqtt")
 		  Dim t() As String
 		  For i As Integer = 0 To track.Count() - 1
 		    t.RemoveAll()
@@ -550,6 +595,8 @@ Protected Module SensorData
 		    t.Add(Str(track.SatCounts(i)))
 		    t.Add(If(track.Rssis(i) = -255, "", Str(track.Rssis(i))))
 		    t.Add(If(track.Snrs(i) = -255, "", FormatValue(track.Snrs(i), "-0.00")))
+		    t.Add(If(track.Hops(i) < 0, "", Str(track.Hops(i))))
+		    t.Add(If(track.ViaMQTTs(i), "1", "0"))
 		    tos.WriteLine(String.FromArray(t, ";"))
 		  Next
 		  tos.Close()
