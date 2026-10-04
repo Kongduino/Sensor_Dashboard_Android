@@ -439,6 +439,16 @@ End
 		  // The chart with the tab's series, or the map
 		  mTab = tabIndex
 		  TabBar.SelectTab(tabIndex)
+		  If Kind <> "device" Then
+		    // What the screen follows, again: the AQI device's nickname only arrives with its first answer
+		    Dim followed As String
+		    If Kind = "mqtt" Then
+		      followed = Hub.MQTT.Describe()
+		    Else
+		      followed = Hub.AQI.Describe()
+		    End If
+		    SourceLabel.Text = followed
+		  End If
 		  Dim info As String = InfoText()
 		  InfoLabel.Text = info
 		  If tabIndex = MapTab() Then

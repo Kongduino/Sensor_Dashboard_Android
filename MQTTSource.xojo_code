@@ -20,7 +20,7 @@ Protected Class MQTTSource
 	#tag Method, Flags = &h0
 		Function ExportRows() As RowSet
 		  Dim nodeArg As Int64 = -1
-		  If mNodeFilter <> 0 Then nodeArg = mNodeFilter
+		  If mNodeFilter <> 0 Then nodeArg = NodeNumber(mNodeFilter)
 		  Dim gatewayArg As Int64 = HexValue(mFeedID)
 		  Return TelemetryRows(2, nodeArg, gatewayArg)
 		End Function
@@ -248,7 +248,7 @@ Protected Class MQTTSource
 		  Dim rh As Double = payload.Lookup("relative_humidity", -255).DoubleValue
 		  Dim pa As Double = payload.Lookup("barometric_pressure", -255).DoubleValue
 		  UpdateData(rssi, snr, temp, rh, pa, TS)
-		  LogTelemetry(2, Format(fromNum, "0"), senderID, Str(TS), payload.ToString(), rssi, snr, MySessionNum)
+		  LogTelemetry(2, Format(NodeNumber(fromNum), "0"), senderID, Str(TS), payload.ToString(), rssi, snr, MySessionNum)
 		  RaiseEvent Changed
 		End Sub
 	#tag EndMethod
@@ -266,7 +266,7 @@ Protected Class MQTTSource
 		  Dim gatewayNum As Int64 = HexValue(mFeedID)
 		  Dim rssi As Integer = js.Lookup("rssi", -255).IntegerValue
 		  Dim snr As Double = js.Lookup("snr", -255).DoubleValue
-		  LogPosition(fromNum, gatewayNum, ts, lat, lon, alt, precision, sats, rssi, snr)
+		  LogPosition(NodeNumber(fromNum), gatewayNum, ts, lat, lon, alt, precision, sats, rssi, snr)
 		  Track().Add(ts, lat, lon, alt, precision, sats, rssi, snr)
 		  RaiseEvent Changed
 		End Sub
@@ -308,7 +308,7 @@ Protected Class MQTTSource
 		Private Sub LoadHistory()
 		  // Earlier readings and positions of this feed from the database (every session)
 		  Dim nodeArg As Int64 = -1
-		  If mNodeFilter <> 0 Then nodeArg = mNodeFilter
+		  If mNodeFilter <> 0 Then nodeArg = NodeNumber(mNodeFilter)
 		  Dim gatewayArg As Int64 = HexValue(mFeedID)
 		  Dim rs As RowSet = HistoryRows(2, nodeArg, gatewayArg)
 		  If rs <> Nil Then
@@ -328,7 +328,7 @@ Protected Class MQTTSource
 		      rs.MoveToNextRow()
 		    Wend
 		  End If
-		  Call Track().LoadHistory(PositionNode())
+		  Call Track().LoadHistory(NodeNumber(PositionNode()))
 		End Sub
 	#tag EndMethod
 

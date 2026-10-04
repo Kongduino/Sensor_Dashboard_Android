@@ -4,8 +4,19 @@ The Android version of [Sensor_Dashboard](https://github.com/Kongduino/Sensor_Da
 
 It's written in Xojo, with no plugins and no external libraries. The Meshtastic and MQTT parts use the [MQTT_Xojo](https://github.com/Kongduino/MQTT_Xojo) library (in `Library/`), and the data, chart and map code is shared with the desktop app (in `Shared/`).
 
+## Screenshots
+
+An M5Stack AQI device on a tablet: the temperature of its two sensors, CO₂, and particulate matter as bars. Under each chart, min / avg / max.
+
+<p>
+  <img src="docs/screenshots/aqi-temperature.png" alt="Temperature chart of the AQI's two sensors" width="32%">
+  <img src="docs/screenshots/aqi-co2.png" alt="CO2 chart" width="32%">
+  <img src="docs/screenshots/aqi-pm.png" alt="Particulate matter bars" width="32%">
+</p>
+
 ## Contents
 
+- [Screenshots](#screenshots)
 - [What it does](#what-it-does)
 - [Requirements](#requirements)
 - [Getting started](#getting-started)

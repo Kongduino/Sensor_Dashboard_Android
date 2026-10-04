@@ -9,6 +9,16 @@ Protected Module SensorData
 
 
 	#tag Method, Flags = &h0
+		Function NodeNumber(num As UInt32) As Int64
+		  // A Meshtastic node number (unsigned 32-bit) as stored in the database. On Android, a UInt32 above 2^31 becomes
+		  // negative when widened (sign extension): corrected here, so both apps store the same positive numbers
+		  Dim n As Int64 = num
+		  If n < 0 Then n = n + 4294967296
+		  Return n
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
 		Function HexText(num As UInt64, digits As Integer) As String
 		  // num as digits uppercase hex digits (the lowest ones). On Android, Hex() keeps only 32 bits (an M5Stack id has 48)
 		  Dim hexDigits As String = "0123456789ABCDEF"
@@ -124,6 +134,17 @@ Protected Module SensorData
 		  MySensordb.ExecuteSQL("CREATE TABLE IF NOT EXISTS positions(posID INTEGER PRIMARY KEY, sessionID INTEGER, " + _
 		  "timestamp INTEGER, fromID INTEGER, senderID INTEGER, latitude REAL, longitude REAL, altitude INTEGER, " + _
 		  "precisionBits INTEGER, sats INTEGER, rssi INTEGER, snr REAL);")
+		  // One-time repairs of data an earlier Android version stored wrongly (nothing to do on desktop): node numbers above
+		  // 2^31 stored as negative numbers (see NodeNumber), and AQI readings stored with device 0 (Val("&H…") is 0 on Android)
+		  Try
+		    MySensordb.ExecuteSQL("UPDATE positions SET fromID = fromID + 4294967296 WHERE fromID < 0;")
+		    MySensordb.ExecuteSQL("UPDATE positions SET senderID = senderID + 4294967296 WHERE senderID < 0;")
+		    MySensordb.ExecuteSQL("UPDATE telemetry SET fromID = fromID + 4294967296 WHERE fromID < 0 AND logType <> 1;")
+		    MySensordb.ExecuteSQL("UPDATE telemetry SET senderID = senderID + 4294967296 WHERE senderID < 0 AND logType <> 1;")
+		    MySensordb.ExecuteSQL("DELETE FROM telemetry WHERE logType = 1 AND fromID = 0;")
+		  Catch eRepair As DatabaseException
+		    LogEvents("OpenDatabase", "Repair: " + eRepair.Message)
+		  End Try
 		  // rssi / snr came later: added to a table created before them. The existing columns are asked first rather than
 		  // relying on the "duplicate column" error (the debugger stops on it, and Android may raise another exception type)
 		  Dim existing() As String

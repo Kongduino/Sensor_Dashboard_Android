@@ -14,7 +14,7 @@ Protected Class NodeSource
 
 	#tag Method, Flags = &h0
 		Function ExportRows() As RowSet
-		  Dim nodeArg As Int64 = ChartNode
+		  Dim nodeArg As Int64 = NodeNumber(ChartNode)
 		  Return TelemetryRows(3, nodeArg, -1)
 		End Function
 	#tag EndMethod
@@ -253,7 +253,7 @@ Protected Class NodeSource
 		  Dim key As String = Str(fromNum)
 		  If TS > mLastStored.Lookup(key, 0).IntegerValue Then
 		    mLastStored.Value(key) = TS
-		    LogTelemetry(3, Format(fromNum, "0"), Format(mMyNum, "0"), Str(TS), payload.ToString(), -255, -255, MySessionNum)
+		    LogTelemetry(3, Format(NodeNumber(fromNum), "0"), Format(NodeNumber(mMyNum), "0"), Str(TS), payload.ToString(), -255, -255, MySessionNum)
 		  End If
 		  If fromNum <> ChartNode Then Return
 		  UpdateData(payload.Lookup("temperature", -255).DoubleValue, payload.Lookup("relative_humidity", -255).DoubleValue, _
@@ -274,7 +274,7 @@ Protected Class NodeSource
 		  Dim key As String = Str(fromNum)
 		  If ts > mLastStoredPos.Lookup(key, 0).IntegerValue Then
 		    mLastStoredPos.Value(key) = ts
-		    LogPosition(fromNum, mMyNum, ts, lat, lon, alt, precision, sats, rssi, snr)
+		    LogPosition(NodeNumber(fromNum), NodeNumber(mMyNum), ts, lat, lon, alt, precision, sats, rssi, snr)
 		  End If
 		  If fromNum = ChartNode Then
 		    Track().Add(ts, lat, lon, alt, precision, sats, rssi, snr)
@@ -305,7 +305,7 @@ Protected Class NodeSource
 	#tag Method, Flags = &h21
 		Private Sub LoadHistory()
 		  // The charted node's earlier readings and positions from the database (every session)
-		  Dim nodeArg As Int64 = ChartNode
+		  Dim nodeArg As Int64 = NodeNumber(ChartNode)
 		  Dim rs As RowSet = HistoryRows(3, nodeArg, -1)
 		  If rs <> Nil Then
 		    While Not rs.AfterLastRow
@@ -324,7 +324,7 @@ Protected Class NodeSource
 		      rs.MoveToNextRow()
 		    Wend
 		  End If
-		  Call Track().LoadHistory(ChartNode)
+		  Call Track().LoadHistory(NodeNumber(ChartNode))
 		End Sub
 	#tag EndMethod
 
