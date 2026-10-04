@@ -1,0 +1,9 @@
+# Working notes and test material (screenshots show private values)
+log.md
+screenshots/
+# Builds and IDE state
+Builds - */
+*.apk
+*.aab
+*.xojo_uistate
+.DS_Store

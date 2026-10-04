@@ -1,0 +1,3 @@
+# The project file's KeyStoreFile line (a local path to the signing keystore) is blanked in what is committed;
+# the working copy keeps it. Filter defined in .git/config (filter.keystore)
+*.xojo_project filter=keystore
