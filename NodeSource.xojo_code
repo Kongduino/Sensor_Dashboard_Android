@@ -144,6 +144,11 @@ Protected Class NodeSource
 		  AddHandler mLink.ConfigComplete, WeakAddressOf LinkConfigComplete
 		  AddHandler mLink.LinkClosed, WeakAddressOf LinkClosed
 		  AddHandler mLink.PacketReceived, WeakAddressOf LinkPacketReceived
+		  // "usb": the node plugged into the phone or tablet (the first USB serial device)
+		  If Hub.Setting("device_host").Trim.Lowercase = "usb" Then
+		    mLink.ConnectUSB("")
+		    Return
+		  End If
 		  Dim port As Integer = Val(Hub.Setting("device_port"))
 		  If port <= 0 Then port = 4403
 		  mLink.ConnectTCP(Hub.Setting("device_host"), port)

@@ -34,7 +34,7 @@ An M5Stack AQI device on a tablet: the temperature of its two sensors, CO₂, an
 
 - **Three sources**, each with its own card on the Home screen and an on/off switch:
   - a **Meshtastic MQTT feed** (the packets one gateway uploads), decrypted with your channel keys
-  - a **Meshtastic node** on your network, over TCP (port 4403)
+  - a **Meshtastic node** on your network over TCP (port 4403), or plugged into the phone or tablet over USB
   - an **M5Stack AQI** device, through M5Stack's ezdata service
 - **Charts** with a time axis and a fitted Y axis: temperature, humidity and pressure; the radio (RSSI / SNR) of an MQTT feed, for packets the gateway heard directly (a relayed packet's values describe the last relay, so only its hop count is kept); CO2, VOC and particulate matter (as bars) for the AQI. Tap a chart, or slide along it, to read a sample's values.
 - **A map** of a node's positions on OpenStreetMap: drag, pinch, double-tap, and the +/−/Fit buttons; tap a point for its time, coordinates, altitude, satellites and reception.
@@ -61,7 +61,7 @@ A source that was on when you left the app starts again the next time you open i
 | Source | Settings | Notes |
 |---|---|---|
 | **MQTT feed** | broker (`host` or `host:port`), root topic (for example `msh/EU_868`), the gateway's node ID (`!aabbccdd`), user and password, channel keys, an optional single node, TLS | Subscribes to `<root topic>/2/e/+/!<gateway>`, as the desktop app does. The root topic is the prefix only, without `#` or `+`. Channel keys: `Name=base64` entries separated by `;`; a key without a name is used for the other channels; empty means the default key (`AQ==`). |
-| **Meshtastic node** | address, port (4403) | A node accepts one TCP client at a time: close the Meshtastic app (or anything else connected to the node) first. The node's own sensor is charted by default; any node it knows can be picked. |
+| **Meshtastic node** | address (or `usb`), port (4403) | A node accepts one TCP client at a time: close the Meshtastic app (or anything else connected to the node) first. With `usb`, the node plugged into the phone or tablet is used (Android asks to allow it, then the card connects on its next try). The node's own sensor is charted by default; any node it knows can be picked. |
 | **M5Stack AQI** | the device ID (12 hex digits) | Polled at the device's own interval (at most every minute). |
 
 ## Screens
@@ -79,7 +79,7 @@ A source that was on when you left the app starts again the next time you open i
 
 How far a test device can send and receive, measured against a gateway node at home: the **Range test** card.
 
-- **Gateway → device:** the gateway is the Meshtastic node card's node (over TCP). **Send** makes it broadcast "Message from !<gateway> #<n>" on the test channel with **hop limit 0**, so only a device in direct range can hear it. The test device, paired with the phone's Meshtastic app, uploads what it hears to MQTT through the app (**MQTT client proxy**); the app follows those uploads (`<root>/2/e/+/!<device>`, with the MQTT card's broker and keys). A message reported back is *heard*, with the device's RSSI / SNR; one not reported within 2 minutes is *missed*. Send waits 5 seconds between messages: the firmware refuses texts sent closer together, and a message the gateway refuses is marked *failed* and left off the map.
+- **Gateway → device:** the gateway is the Meshtastic node card's node (over TCP or USB). **Send** makes it broadcast "Message from !<gateway> #<n>" on the test channel with **hop limit 0**, so only a device in direct range can hear it. The test device, paired with the phone's Meshtastic app, uploads what it hears to MQTT through the app (**MQTT client proxy**); the app follows those uploads (`<root>/2/e/+/!<device>`, with the MQTT card's broker and keys). A message reported back is *heard*, with the device's RSSI / SNR; one not reported within 2 minutes is *missed*. Send waits 5 seconds between messages: the firmware refuses texts sent closer together, and a message the gateway refuses is marked *failed* and left off the map.
 - **Device → gateway:** every packet of the test device the gateway hears (positions, replies…), with the gateway's RSSI / SNR. When the device sends the same packet twice (it heard no node rebroadcast it, a sign of a weak link), the Log tab says *repeated*. Automatic packets (positions, telemetry, node info), in either direction, taken less than 30 m from the previous one kept are dropped, so a device standing still doesn't pile up points; test messages and texts are always kept.
 - **Where:** each reading is placed at the phone's position (location permission, asked once; it needs a GPS, which many tablets don't have), else at the device's last reported position if its fix is at most 15 minutes old. For a walk, set the test device to broadcast its position often (for example `position.position_broadcast_secs` 60; the default is an hour).
 - **Maps:** one per direction. Packets heard directly are coloured by SNR (red at −20 dB, yellow around −7, green from +5); relayed packets are grey dots with their hop count, unknown hops grey rings, missed messages red crosses. Tap a point for its details. Earlier tests between the same gateway and device are shown too. The **Log** tab lists the latest readings.
@@ -117,7 +117,7 @@ Sensor_Dashboard_Android.xojo_project   the project (open this in Xojo)
 App.xojo_code                 the app: back in the foreground, the sources catch up
 Hub.xojo_code                 the app's state: settings, database, the three sources
 MQTTSource.xojo_code          the MQTT feed
-NodeSource.xojo_code          a Meshtastic node over TCP
+NodeSource.xojo_code          a Meshtastic node over TCP or USB
 AQISource.xojo_code           an M5Stack AQI device
 HomeScreen.xojo_code          the cards and switches
 SourceCard.xojo_code          one card (a canvas)
@@ -149,7 +149,7 @@ Xojo translates Android projects to Kotlin, and some code that's fine on desktop
 ## Limitations
 
 - The app collects data only while it's on screen (no background service).
-- No USB connection to a node (Xojo for Android has no serial port).
+- Android asks for permission to use a USB node each time it's plugged in.
 - MQTT TLS encrypts the connection but doesn't verify the broker's certificate (Xojo's SSLSocket).
 - Sharing several files gives one zip.
 

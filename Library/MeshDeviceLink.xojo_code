@@ -36,6 +36,47 @@ Protected Class MeshDeviceLink
 	#tag EndMethod
 
 	#tag Method, Flags = &h0
+		Sub ConnectUSB(deviceName As String = "")
+		  // Android: opens a USB serial device through USBSerial (usb-serial-for-android; deviceName as USBSerial.Devices()
+		  // lists it, "" = the first one) at 115200 baud, then asks it for its configuration. Without the user's
+		  // permission yet, Android asks for it and LinkClosed says so: connect again once allowed. On desktop and
+		  // console, use ConnectSerial
+		  Close
+		  #If TargetAndroid Then
+		    Dim name As String = deviceName
+		    If name = "" Then
+		      Dim found() As String = USBSerial.Devices()
+		      If found.Count = 0 Then
+		        RaiseEvent LinkClosed("no USB serial device attached")
+		        Return
+		      End If
+		      Dim tab As String = Chr(9)
+		      Dim fields() As String = found(0).Split(tab)
+		      name = fields(0)
+		    End If
+		    If Not USBSerial.HasPermission(name) Then
+		      Call USBSerial.RequestPermission(name)
+		      RaiseEvent LinkClosed("waiting for permission to use the USB device")
+		      Return
+		    End If
+		    Dim port As New USBSerial
+		    AddHandler port.DataAvailable, WeakAddressOf USBDataAvailable
+		    AddHandler port.Error, WeakAddressOf USBError
+		    RaiseEvent LogLine("Opening " + name)
+		    If Not port.Open(name, 115200) Then
+		      RaiseEvent LinkClosed(port.LastError())
+		      Return
+		    End If
+		    mUSB = port
+		    LinkUp
+		  #Else
+		    #Pragma Unused deviceName
+		    RaiseEvent LinkClosed("ConnectUSB is for Android: use ConnectSerial")
+		  #EndIf
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
 		Sub ConnectTCP(host As String, port As Integer = 4403)
 		  // Connects to the device's TCP API (WiFi or Ethernet nodes listen on port 4403)
 		  Close
@@ -427,6 +468,12 @@ Protected Class MeshDeviceLink
 		    mTCP.Close
 		    mTCP = Nil
 		  End If
+		  If mUSB <> Nil Then
+		    RemoveHandler mUSB.DataAvailable, WeakAddressOf USBDataAvailable
+		    RemoveHandler mUSB.Error, WeakAddressOf USBError
+		    mUSB.Close()
+		    mUSB = Nil
+		  End If
 		  #If Not TargetAndroid Then
 		    If mSerial <> Nil Then
 		      RemoveHandler mSerial.DataReceived, WeakAddressOf SerialDataReceived
@@ -439,10 +486,30 @@ Protected Class MeshDeviceLink
 	#tag EndMethod
 
 	#tag Method, Flags = &h21
+		Private Sub USBDataAvailable(sender As USBSerial, data As String)
+		  #Pragma Unused sender
+		  Receive(data)
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
+		Private Sub USBError(sender As USBSerial, message As String)
+		  // Usually the device unplugged
+		  #Pragma Unused sender
+		  Teardown
+		  RaiseEvent LinkClosed("USB: " + message)
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
 		Private Sub WriteRaw(s As String)
 		  s = MeshBin(s) // on Android the bytes go out one per character only when the String is tagged so (see MeshBin)
 		  If mTCP <> Nil Then
 		    mTCP.Write(s)
+		    Return
+		  End If
+		  If mUSB <> Nil Then
+		    Call mUSB.Write(s)
 		    Return
 		  End If
 		  #If Not TargetAndroid Then
@@ -523,6 +590,10 @@ Protected Class MeshDeviceLink
 
 	#tag Property, Flags = &h21
 		Private mTCP As TCPSocket
+	#tag EndProperty
+
+	#tag Property, Flags = &h21
+		Private mUSB As USBSerial
 	#tag EndProperty
 
 	#tag Property, Flags = &h21

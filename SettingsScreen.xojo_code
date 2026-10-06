@@ -425,7 +425,8 @@ End
 		    PortField.Text = Hub.Setting("range_channel")
 		  Case "device"
 		    Self.Title = "Meshtastic node"
-		    HelpLabel.Text = "A node on your network (TCP). Close the Meshtastic app first: a node takes one client at a time."
+		    HelpLabel.Text = "A node on your network (TCP), or usb for a node plugged into this device. Close the Meshtastic app first: a node takes one client at a time."
+		    HostField.Hint = "Node IP address, host name, or usb"
 		    rows.Add(HostField)
 		    rows.Add(PortField)
 		    HostField.Text = Hub.Setting("device_host")
