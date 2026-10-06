@@ -2,7 +2,7 @@
 
 The Android version of [Sensor_Dashboard](https://github.com/Kongduino/Sensor_Dashboard): environment readings and positions from a Meshtastic MQTT feed, a Meshtastic node on your network, and an M5Stack air-quality monitor (AQI), charted and mapped on a phone or tablet.
 
-It's written in Xojo, with no plugins and no external libraries. The Meshtastic and MQTT parts use the [MQTT_Xojo](https://github.com/Kongduino/MQTT_Xojo) library (in `Library/`), and the data, chart and map code is shared with the desktop app (in `Shared/`).
+It's written in Xojo, with no plugins; the only external libraries are for USB: [usb-serial-for-android](https://github.com/mik3y/usb-serial-for-android) and [XojoUsbAttach](https://github.com/Kongduino/XojoUsbAttach), fetched by Gradle at build time. The Meshtastic and MQTT parts use the [MQTT_Xojo](https://github.com/Kongduino/MQTT_Xojo) library (in `Library/`), and the data, chart and map code is shared with the desktop app (in `Shared/`).
 
 ## Screenshots
 
@@ -60,7 +60,7 @@ A source that was on when you left the app starts again the next time you open i
 
 | Source | Settings | Notes |
 |---|---|---|
-| **MQTT feed** | broker (`host` or `host:port`), root topic (for example `msh/EU_868`), the gateway's node ID (`!aabbccdd`), user and password, channel keys, an optional single node, TLS | Subscribes to `<root topic>/2/e/+/!<gateway>`, as the desktop app does. The root topic is the prefix only, without `#` or `+`. Channel keys: `Name=base64` entries separated by `;`; a key without a name is used for the other channels; empty means the default key (`AQ==`). |
+| **MQTT feed** | broker (`host` or `host:port`), root topic (for example `msh/EU_868`), the gateway's node ID (`!aabbccdd`), user and password, channel keys, an optional single node, TLS | Subscribes to `<root topic>/2/e/+/!<gateway>`, as the desktop app does. The root topic is the prefix only, without `#` or `+`. Channel keys: `Name=base64` entries separated by `;`; a key without a name is used for the other channels; empty means the default key (`AQ==`). **Saved feeds:** every saved setup is kept; pick one in the popup at the top of the settings to fill the fields, then Save (Forget deletes it). Spaces are removed from the broker, topic and IDs on Save (Android's keyboard can add one after each dot). |
 | **Meshtastic node** | address (or `usb`), port (4403) | A node accepts one TCP client at a time: close the Meshtastic app (or anything else connected to the node) first. With `usb`, the node plugged into the phone or tablet is used: plugging it in opens the app with the USB permission granted ([XojoUsbAttach](https://github.com/Kongduino/XojoUsbAttach); choose **Always** the first time), and the card connects on its next try. The node's own sensor is charted by default; any node it knows can be picked. |
 | **M5Stack AQI** | the device ID (12 hex digits) | Polled at the device's own interval (at most every minute). |
 
@@ -104,7 +104,7 @@ All in the app's own storage, readable by the app only:
 | What | Where |
 |---|---|
 | Settings (including the MQTT password and channel keys) | `settings.json` in the app's files folder |
-| Readings and positions | `records.sqlite`, next to it |
+| Readings, positions, range tests, saved MQTT feeds (with their passwords and keys) | `records.sqlite`, next to it |
 | Event log of the last run | `Event_Log.txt`, next to it |
 | Map tiles | the app's cache folder (`tiles/`); Android may clear it, and they come back |
 

@@ -139,6 +139,10 @@ Protected Module SensorData
 		  "gatewayID INTEGER, deviceID INTEGER, direction INTEGER, status TEXT, method TEXT, packetID INTEGER, seq INTEGER, label TEXT, " + _
 		  "rssi INTEGER, snr REAL, hops INTEGER, hopStart INTEGER, relayNode INTEGER, viaMQTT INTEGER, " + _
 		  "latitude REAL, longitude REAL, altitude INTEGER, posSource TEXT);")
+		  // Saved MQTT feeds, to switch between brokers and gateways quickly (see SaveMQTTProfile). Holds the password and
+		  // channel keys in plain text, like the settings file; never exported
+		  MySensordb.ExecuteSQL("CREATE TABLE IF NOT EXISTS mqtt_profiles(profileID INTEGER PRIMARY KEY, broker TEXT, rootTopic TEXT, " + _
+		  "gatewayID TEXT, username TEXT, password TEXT, keys TEXT, nodeFilter TEXT, tls INTEGER, lastUsed INTEGER);")
 		  // One-time repairs of data an earlier Android version stored wrongly (nothing to do on desktop): node numbers above
 		  // 2^31 stored as negative numbers (see NodeNumber), and AQI readings stored with device 0 (Val("&H…") is 0 on Android)
 		  Try
@@ -286,6 +290,38 @@ Protected Module SensorData
 	#tag EndMethod
 
 	#tag Method, Flags = &h0
+		Sub ForgetMQTTProfile(profileID As Int64)
+		  // Deletes a saved MQTT feed
+		  Try
+		    MySensordb.ExecuteSQL("DELETE FROM mqtt_profiles WHERE profileID=" + Format(profileID, "0") + ";")
+		  Catch e As DatabaseException
+		    LogEvents "ForgetMQTTProfile", "Database error: " + e.Message
+		  End Try
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Function MQTTProfileName(broker As String, rootTopic As String, gatewayID As String, username As String) As String
+		  // How a saved MQTT feed is listed: "!aabbccdd · msh/EU_868 @ broker", plus the user name when there is one
+		  Dim name As String = gatewayID + " · " + rootTopic + " @ " + broker
+		  If username <> "" Then name = name + " (" + username + ")"
+		  Return name
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Function MQTTProfiles() As RowSet
+		  // The saved MQTT feeds, most recently used first
+		  Try
+		    Return MySensordb.SelectSQL("SELECT * FROM mqtt_profiles ORDER BY lastUsed DESC, profileID DESC;")
+		  Catch e As DatabaseException
+		    LogEvents "MQTTProfiles", "Database error: " + e.Message
+		    Return Nil
+		  End Try
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
 		Function RangeRows(gatewayID As Int64, deviceID As Int64) As RowSet
 		  // Every range-test row of this gateway and device (all sessions), oldest first
 		  Try
@@ -296,6 +332,32 @@ Protected Module SensorData
 		    Return Nil
 		  End Try
 		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Sub SaveMQTTProfile(broker As String, rootTopic As String, gatewayID As String, username As String, password As String, keys As String, nodeFilter As String, tls As Boolean)
+		  // Saves an MQTT feed, or updates the one with the same broker, root topic, gateway and user name; it becomes the
+		  // most recently used
+		  Dim now As String = Format(DateTime.Now().SecondsFrom1970, "0")
+		  Dim tlsValue As String = If(tls, "1", "0")
+		  Dim match As String = "LOWER(broker)=LOWER(" + SQLText(broker) + ") AND rootTopic=" + SQLText(rootTopic) + _
+		  " AND LOWER(gatewayID)=LOWER(" + SQLText(gatewayID) + ") AND username=" + SQLText(username)
+		  Try
+		    Dim rs As RowSet = MySensordb.SelectSQL("SELECT profileID FROM mqtt_profiles WHERE " + match + ";")
+		    If rs <> Nil And Not rs.AfterLastRow Then
+		      Dim id As Int64 = rs.Column("profileID").Int64Value
+		      MySensordb.ExecuteSQL("UPDATE mqtt_profiles SET broker=" + SQLText(broker) + ", gatewayID=" + SQLText(gatewayID) + _
+		      ", password=" + SQLText(password) + ", keys=" + SQLText(keys) + ", nodeFilter=" + SQLText(nodeFilter) + _
+		      ", tls=" + tlsValue + ", lastUsed=" + now + " WHERE profileID=" + Format(id, "0") + ";")
+		    Else
+		      MySensordb.ExecuteSQL("INSERT INTO mqtt_profiles(broker, rootTopic, gatewayID, username, password, keys, nodeFilter, tls, lastUsed) VALUES (" + _
+		      SQLText(broker) + ", " + SQLText(rootTopic) + ", " + SQLText(gatewayID) + ", " + SQLText(username) + ", " + _
+		      SQLText(password) + ", " + SQLText(keys) + ", " + SQLText(nodeFilter) + ", " + tlsValue + ", " + now + ");")
+		    End If
+		  Catch e As DatabaseException
+		    LogEvents "SaveMQTTProfile", "Database error: " + e.Message
+		  End Try
+		End Sub
 	#tag EndMethod
 
 	#tag Method, Flags = &h0

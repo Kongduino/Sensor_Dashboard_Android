@@ -14,19 +14,23 @@ Begin MobileScreen SettingsScreen
    Begin MobileLabel HelpLabel
       AccessibilityHint=   ""
       AccessibilityLabel=   ""
+      AdjustTextSizeToFit=   False
       Alignment       =   0
       Enabled         =   True
       Height          =   40
       Left            =   20
       LineBreakMode   =   0
       LockBottom      =   False
+      LockedInPosition=   False
       LockLeft        =   True
       LockRight       =   True
       LockTop         =   True
-      LockedInPosition=   False
+      MaximumCharactersAllowed=   0
       Scope           =   2
       Text            =   ""
       TextColor       =   &c00000000
+      TextFont        =   ""
+      TextSize        =   0
       Top             =   12
       Visible         =   True
       Width           =   320
@@ -36,16 +40,18 @@ Begin MobileScreen SettingsScreen
       AccessibilityLabel=   ""
       Alignment       =   0
       AllowSpellChecking=   False
+      BorderStyle     =   3
       Enabled         =   True
       Height          =   52
       Hint            =   "Broker (host or host:port)"
+      HintColor       =   
       InputType       =   0
       Left            =   20
       LockBottom      =   False
+      LockedInPosition=   False
       LockLeft        =   True
       LockRight       =   True
       LockTop         =   True
-      LockedInPosition=   False
       MaximumCharactersAllowed=   0
       Password        =   False
       ReadOnly        =   False
@@ -55,6 +61,9 @@ Begin MobileScreen SettingsScreen
       SelectionStart  =   0
       Text            =   ""
       TextColor       =   &c00000000
+      TextFont        =   ""
+      TextSize        =   0
+      TintColor       =   
       Top             =   0
       Visible         =   True
       Width           =   320
@@ -64,16 +73,18 @@ Begin MobileScreen SettingsScreen
       AccessibilityLabel=   ""
       Alignment       =   0
       AllowSpellChecking=   False
+      BorderStyle     =   3
       Enabled         =   True
       Height          =   52
       Hint            =   "Root topic (e.g. msh/EU_868)"
+      HintColor       =   
       InputType       =   0
       Left            =   20
       LockBottom      =   False
+      LockedInPosition=   False
       LockLeft        =   True
       LockRight       =   True
       LockTop         =   True
-      LockedInPosition=   False
       MaximumCharactersAllowed=   0
       Password        =   False
       ReadOnly        =   False
@@ -83,6 +94,9 @@ Begin MobileScreen SettingsScreen
       SelectionStart  =   0
       Text            =   ""
       TextColor       =   &c00000000
+      TextFont        =   ""
+      TextSize        =   0
+      TintColor       =   
       Top             =   0
       Visible         =   True
       Width           =   320
@@ -92,16 +106,18 @@ Begin MobileScreen SettingsScreen
       AccessibilityLabel=   ""
       Alignment       =   0
       AllowSpellChecking=   False
+      BorderStyle     =   3
       Enabled         =   True
       Height          =   52
       Hint            =   "Gateway node ID (!aabbccdd)"
+      HintColor       =   
       InputType       =   0
       Left            =   20
       LockBottom      =   False
+      LockedInPosition=   False
       LockLeft        =   True
       LockRight       =   True
       LockTop         =   True
-      LockedInPosition=   False
       MaximumCharactersAllowed=   0
       Password        =   False
       ReadOnly        =   False
@@ -111,6 +127,9 @@ Begin MobileScreen SettingsScreen
       SelectionStart  =   0
       Text            =   ""
       TextColor       =   &c00000000
+      TextFont        =   ""
+      TextSize        =   0
+      TintColor       =   
       Top             =   0
       Visible         =   True
       Width           =   320
@@ -120,16 +139,18 @@ Begin MobileScreen SettingsScreen
       AccessibilityLabel=   ""
       Alignment       =   0
       AllowSpellChecking=   False
+      BorderStyle     =   3
       Enabled         =   True
       Height          =   52
       Hint            =   "User"
+      HintColor       =   
       InputType       =   0
       Left            =   20
       LockBottom      =   False
+      LockedInPosition=   False
       LockLeft        =   True
       LockRight       =   True
       LockTop         =   True
-      LockedInPosition=   False
       MaximumCharactersAllowed=   0
       Password        =   False
       ReadOnly        =   False
@@ -139,6 +160,9 @@ Begin MobileScreen SettingsScreen
       SelectionStart  =   0
       Text            =   ""
       TextColor       =   &c00000000
+      TextFont        =   ""
+      TextSize        =   0
+      TintColor       =   
       Top             =   0
       Visible         =   True
       Width           =   320
@@ -148,16 +172,18 @@ Begin MobileScreen SettingsScreen
       AccessibilityLabel=   ""
       Alignment       =   0
       AllowSpellChecking=   False
+      BorderStyle     =   3
       Enabled         =   True
       Height          =   52
       Hint            =   "Password"
+      HintColor       =   
       InputType       =   0
       Left            =   20
       LockBottom      =   False
+      LockedInPosition=   False
       LockLeft        =   True
       LockRight       =   True
       LockTop         =   True
-      LockedInPosition=   False
       MaximumCharactersAllowed=   0
       Password        =   True
       ReadOnly        =   False
@@ -167,6 +193,9 @@ Begin MobileScreen SettingsScreen
       SelectionStart  =   0
       Text            =   ""
       TextColor       =   &c00000000
+      TextFont        =   ""
+      TextSize        =   0
+      TintColor       =   
       Top             =   0
       Visible         =   True
       Width           =   320
@@ -176,16 +205,18 @@ Begin MobileScreen SettingsScreen
       AccessibilityLabel=   ""
       Alignment       =   0
       AllowSpellChecking=   False
+      BorderStyle     =   3
       Enabled         =   True
       Height          =   52
       Hint            =   "Channel keys (Name=base64; …)"
+      HintColor       =   
       InputType       =   0
       Left            =   20
       LockBottom      =   False
+      LockedInPosition=   False
       LockLeft        =   True
       LockRight       =   True
       LockTop         =   True
-      LockedInPosition=   False
       MaximumCharactersAllowed=   0
       Password        =   False
       ReadOnly        =   False
@@ -195,6 +226,9 @@ Begin MobileScreen SettingsScreen
       SelectionStart  =   0
       Text            =   ""
       TextColor       =   &c00000000
+      TextFont        =   ""
+      TextSize        =   0
+      TintColor       =   
       Top             =   0
       Visible         =   True
       Width           =   320
@@ -204,16 +238,18 @@ Begin MobileScreen SettingsScreen
       AccessibilityLabel=   ""
       Alignment       =   0
       AllowSpellChecking=   False
+      BorderStyle     =   3
       Enabled         =   True
       Height          =   52
       Hint            =   "Only this node (!aabbccdd, optional)"
+      HintColor       =   
       InputType       =   0
       Left            =   20
       LockBottom      =   False
+      LockedInPosition=   False
       LockLeft        =   True
       LockRight       =   True
       LockTop         =   True
-      LockedInPosition=   False
       MaximumCharactersAllowed=   0
       Password        =   False
       ReadOnly        =   False
@@ -223,6 +259,9 @@ Begin MobileScreen SettingsScreen
       SelectionStart  =   0
       Text            =   ""
       TextColor       =   &c00000000
+      TextFont        =   ""
+      TextSize        =   0
+      TintColor       =   
       Top             =   0
       Visible         =   True
       Width           =   320
@@ -230,19 +269,23 @@ Begin MobileScreen SettingsScreen
    Begin MobileLabel TLSLabel
       AccessibilityHint=   ""
       AccessibilityLabel=   ""
+      AdjustTextSizeToFit=   False
       Alignment       =   0
       Enabled         =   True
       Height          =   30
       Left            =   20
       LineBreakMode   =   0
       LockBottom      =   False
+      LockedInPosition=   False
       LockLeft        =   True
       LockRight       =   True
       LockTop         =   True
-      LockedInPosition=   False
+      MaximumCharactersAllowed=   0
       Scope           =   2
       Text            =   "TLS (usually port 8883)"
       TextColor       =   &c00000000
+      TextFont        =   ""
+      TextSize        =   0
       Top             =   0
       Visible         =   True
       Width           =   250
@@ -254,11 +297,13 @@ Begin MobileScreen SettingsScreen
       Height          =   30
       Left            =   276
       LockBottom      =   False
+      LockedInPosition=   False
       LockLeft        =   False
       LockRight       =   True
       LockTop         =   True
-      LockedInPosition=   False
       Scope           =   2
+      ThumbColor      =   
+      TintColor       =   
       Top             =   0
       Value           =   False
       Visible         =   True
@@ -269,16 +314,18 @@ Begin MobileScreen SettingsScreen
       AccessibilityLabel=   ""
       Alignment       =   0
       AllowSpellChecking=   False
+      BorderStyle     =   3
       Enabled         =   True
       Height          =   52
       Hint            =   "Node IP address or host name"
+      HintColor       =   
       InputType       =   0
       Left            =   20
       LockBottom      =   False
+      LockedInPosition=   False
       LockLeft        =   True
       LockRight       =   True
       LockTop         =   True
-      LockedInPosition=   False
       MaximumCharactersAllowed=   0
       Password        =   False
       ReadOnly        =   False
@@ -288,6 +335,9 @@ Begin MobileScreen SettingsScreen
       SelectionStart  =   0
       Text            =   ""
       TextColor       =   &c00000000
+      TextFont        =   ""
+      TextSize        =   0
+      TintColor       =   
       Top             =   0
       Visible         =   True
       Width           =   320
@@ -297,16 +347,18 @@ Begin MobileScreen SettingsScreen
       AccessibilityLabel=   ""
       Alignment       =   0
       AllowSpellChecking=   False
+      BorderStyle     =   3
       Enabled         =   True
       Height          =   52
       Hint            =   "TCP port (4403)"
+      HintColor       =   
       InputType       =   0
       Left            =   20
       LockBottom      =   False
+      LockedInPosition=   False
       LockLeft        =   True
       LockRight       =   True
       LockTop         =   True
-      LockedInPosition=   False
       MaximumCharactersAllowed=   0
       Password        =   False
       ReadOnly        =   False
@@ -316,6 +368,9 @@ Begin MobileScreen SettingsScreen
       SelectionStart  =   0
       Text            =   ""
       TextColor       =   &c00000000
+      TextFont        =   ""
+      TextSize        =   0
+      TintColor       =   
       Top             =   0
       Visible         =   True
       Width           =   320
@@ -325,16 +380,18 @@ Begin MobileScreen SettingsScreen
       AccessibilityLabel=   ""
       Alignment       =   0
       AllowSpellChecking=   False
+      BorderStyle     =   3
       Enabled         =   True
       Height          =   52
       Hint            =   "M5Stack device ID (12 hex digits)"
+      HintColor       =   
       InputType       =   0
       Left            =   20
       LockBottom      =   False
+      LockedInPosition=   False
       LockLeft        =   True
       LockRight       =   True
       LockTop         =   True
-      LockedInPosition=   False
       MaximumCharactersAllowed=   0
       Password        =   False
       ReadOnly        =   False
@@ -344,6 +401,9 @@ Begin MobileScreen SettingsScreen
       SelectionStart  =   0
       Text            =   ""
       TextColor       =   &c00000000
+      TextFont        =   ""
+      TextSize        =   0
+      TintColor       =   
       Top             =   0
       Visible         =   True
       Width           =   320
@@ -351,17 +411,26 @@ Begin MobileScreen SettingsScreen
    Begin MobileButton SaveButton
       AccessibilityHint=   ""
       AccessibilityLabel=   ""
+      AdjustTextSizeToFit=   False
+      BackgroundColor =   
+      BorderColor     =   
+      BorderWidth     =   0
       Caption         =   "Save"
       CaptionColor    =   &c00000000
+      CornerSize      =   0
+      DisplayMenuAsAction=   False
       Enabled         =   True
       Height          =   48
+      Icon            =   0
       Left            =   20
       LockBottom      =   False
+      LockedInPosition=   False
       LockLeft        =   True
       LockRight       =   True
       LockTop         =   True
-      LockedInPosition=   False
       Scope           =   2
+      TextFont        =   ""
+      TextSize        =   0
       Top             =   0
       Visible         =   True
       Width           =   320
@@ -369,22 +438,77 @@ Begin MobileScreen SettingsScreen
    Begin MobileLabel ProblemLabel
       AccessibilityHint=   ""
       AccessibilityLabel=   ""
+      AdjustTextSizeToFit=   False
       Alignment       =   0
       Enabled         =   True
       Height          =   60
       Left            =   20
       LineBreakMode   =   0
       LockBottom      =   False
+      LockedInPosition=   False
       LockLeft        =   True
       LockRight       =   True
       LockTop         =   True
-      LockedInPosition=   False
+      MaximumCharactersAllowed=   0
       Scope           =   2
       Text            =   ""
       TextColor       =   &c00000000
+      TextFont        =   ""
+      TextSize        =   0
       Top             =   0
       Visible         =   True
       Width           =   320
+   End
+   Begin MobilePopupMenu ProfileMenu
+      AccessibilityHint=   ""
+      AccessibilityLabel=   ""
+      Enabled         =   True
+      Height          =   40
+      InitialValue    =   ""
+      LastAddedRowIndex=   0
+      LastRowIndex    =   0
+      Left            =   20
+      LockBottom      =   False
+      LockedInPosition=   False
+      LockLeft        =   True
+      LockRight       =   True
+      LockTop         =   True
+      RowCount        =   0
+      Scope           =   2
+      SelectedRowIndex=   0
+      SelectedRowText =   ""
+      TextColor       =   
+      TintColor       =   
+      Top             =   68
+      Visible         =   True
+      Width           =   210
+   End
+   Begin MobileButton ForgetButton
+      AccessibilityHint=   ""
+      AccessibilityLabel=   ""
+      AdjustTextSizeToFit=   False
+      BackgroundColor =   
+      BorderColor     =   
+      BorderWidth     =   0
+      Caption         =   "Forget"
+      CaptionColor    =   &cffffff
+      CornerSize      =   0
+      DisplayMenuAsAction=   False
+      Enabled         =   True
+      Height          =   44
+      Icon            =   0
+      Left            =   240
+      LockBottom      =   False
+      LockedInPosition=   False
+      LockLeft        =   False
+      LockRight       =   True
+      LockTop         =   True
+      Scope           =   2
+      TextFont        =   ""
+      TextSize        =   0
+      Top             =   68
+      Visible         =   True
+      Width           =   100
    End
 End
 #tag EndMobileScreen
@@ -398,6 +522,7 @@ End
 		  Case "mqtt"
 		    Self.Title = "MQTT feed"
 		    HelpLabel.Text = "The broker your gateway publishes to, and the gateway's node ID."
+		    rows.Add(ProfileMenu)
 		    rows.Add(BrokerField)
 		    rows.Add(TopicField)
 		    rows.Add(GatewayField)
@@ -450,6 +575,8 @@ End
 		  all.Add(HostField)
 		  all.Add(PortField)
 		  all.Add(DeviceField)
+		  all.Add(ProfileMenu)
+		  all.Add(ForgetButton)
 		  For Each c As MobileUIControl In all
 		    c.Visible = False
 		  Next
@@ -462,12 +589,70 @@ End
 		  If Kind = "mqtt" Then
 		    TLSSwitch.Top = TLSLabel.Top
 		    TLSSwitch.Visible = True
+		    ForgetButton.Top = ProfileMenu.Top
+		    ForgetButton.Visible = True
+		    SeedProfiles()
+		    LoadProfiles()
 		  End If
 		  SaveButton.Top = y + 8
 		  ProblemLabel.Top = y + 64
 		  ProblemLabel.Text = ""
 		End Sub
 	#tag EndEvent
+
+
+	#tag Method, Flags = &h21
+		Private Sub CleanFields()
+		  // No spaces in names and addresses: Android's keyboard can add one after each dot ("mqtt. example. com").
+		  // User names and passwords are left as typed (they may contain spaces). Through variables (see SelectionChanged)
+		  Dim broker As String = BrokerField.Text.ReplaceAll(" ", "")
+		  Dim topic As String = TopicField.Text.ReplaceAll(" ", "")
+		  Dim filter As String = FilterField.Text.ReplaceAll(" ", "")
+		  Dim host As String = HostField.Text.ReplaceAll(" ", "")
+		  BrokerField.Text = broker
+		  TopicField.Text = topic
+		  FilterField.Text = filter
+		  HostField.Text = host
+		  // GatewayField is the gateway ID (MQTT) or the test device ID (range): an ID either way
+		  Dim gateway As String = GatewayField.Text.ReplaceAll(" ", "")
+		  GatewayField.Text = gateway
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
+		Private Sub LoadProfiles()
+		  // The saved MQTT feeds in the popup, most recently used first; row 0 is a title
+		  mProfiles.RemoveAll
+		  ProfileMenu.RemoveAllRows()
+		  Dim rs As RowSet = MQTTProfiles()
+		  If rs <> Nil Then
+		    While Not rs.AfterLastRow
+		      Dim d As New Dictionary
+		      d.Value("id") = rs.Column("profileID").Int64Value
+		      d.Value("broker") = rs.Column("broker").StringValue
+		      d.Value("rootTopic") = rs.Column("rootTopic").StringValue
+		      d.Value("gatewayID") = rs.Column("gatewayID").StringValue
+		      d.Value("username") = rs.Column("username").StringValue
+		      d.Value("password") = rs.Column("password").StringValue
+		      d.Value("keys") = rs.Column("keys").StringValue
+		      d.Value("nodeFilter") = rs.Column("nodeFilter").StringValue
+		      d.Value("tls") = (rs.Column("tls").IntegerValue = 1)
+		      mProfiles.Add(d)
+		      rs.MoveToNextRow()
+		    Wend
+		  End If
+		  Dim title As String = "Saved feeds (" + Str(mProfiles.Count) + ")"
+		  If mProfiles.Count = 0 Then title = "No saved feeds yet"
+		  ProfileMenu.AddRow(title)
+		  For Each d As Dictionary In mProfiles
+		    Dim name As String = MQTTProfileName(d.Value("broker").StringValue, d.Value("rootTopic").StringValue, _
+		    d.Value("gatewayID").StringValue, d.Value("username").StringValue)
+		    ProfileMenu.AddRow(name)
+		  Next
+		  ProfileMenu.SelectedRowIndex = 0
+		  ForgetButton.Enabled = False
+		End Sub
+	#tag EndMethod
 
 	#tag Method, Flags = &h21
 		Private Function Problem() As String
@@ -495,6 +680,19 @@ End
 	#tag EndMethod
 
 	#tag Method, Flags = &h21
+		Private Sub SeedProfiles()
+		  // Once: the MQTT settings in use before saved feeds existed become the first saved feed
+		  If Hub.SettingBool("mqtt_profiles_seeded") Then Return
+		  Hub.SetSetting("mqtt_profiles_seeded", True)
+		  Hub.SaveSettings()
+		  If Hub.Setting("mqtt_broker") = "" Then Return
+		  SaveMQTTProfile(Hub.Setting("mqtt_broker"), Hub.Setting("mqtt_root_topic"), Hub.Setting("mqtt_gateway_id"), _
+		  Hub.Setting("mqtt_username"), Hub.Setting("mqtt_password"), Hub.Setting("mqtt_keys"), Hub.Setting("mqtt_node_filter"), _
+		  Hub.SettingBool("mqtt_tls"))
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
 		Private Sub Save()
 		  // Stores the fields; a source that is on restarts with them
 		  Select Case Kind
@@ -507,6 +705,8 @@ End
 		    Hub.SetSetting("mqtt_keys", KeysField.Text.Trim)
 		    Hub.SetSetting("mqtt_node_filter", FilterField.Text.Trim)
 		    Hub.SetSetting("mqtt_tls", TLSSwitch.Value)
+		    SaveMQTTProfile(BrokerField.Text.Trim, TopicField.Text.Trim, GatewayField.Text.Trim, UserField.Text.Trim, _
+		    PasswordField.Text.Trim, KeysField.Text.Trim, FilterField.Text.Trim, TLSSwitch.Value)
 		    If Hub.MQTT.IsOn() Then
 		      Hub.MQTT.Stop()
 		      Hub.MQTT.Start()
@@ -539,15 +739,66 @@ End
 		End Sub
 	#tag EndMethod
 
+
 	#tag Property, Flags = &h0
 		Kind As String
 	#tag EndProperty
 
+	#tag Property, Flags = &h21
+		Private mProfiles() As Dictionary
+	#tag EndProperty
+
+
 #tag EndScreenCode
 
+#tag Events ProfileMenu
+	#tag Event
+		Sub SelectionChanged(item As MobileMenuItem)
+		  // A saved feed fills the fields; Save uses it
+		  #Pragma Unused item
+		  Dim idx As Integer = ProfileMenu.SelectedRowIndex
+		  ForgetButton.Enabled = (idx > 0)
+		  If idx <= 0 Or idx > mProfiles.Count Then Return
+		  Dim d As Dictionary = mProfiles(idx - 1)
+		  // Through variables: a chained call assigned straight to a control property can fail on Android
+		  Dim broker As String = d.Value("broker").StringValue
+		  Dim rootTopic As String = d.Value("rootTopic").StringValue
+		  Dim gatewayID As String = d.Value("gatewayID").StringValue
+		  Dim username As String = d.Value("username").StringValue
+		  Dim password As String = d.Value("password").StringValue
+		  Dim keys As String = d.Value("keys").StringValue
+		  Dim nodeFilter As String = d.Value("nodeFilter").StringValue
+		  Dim tls As Boolean = d.Value("tls").BooleanValue
+		  BrokerField.Text = broker
+		  TopicField.Text = rootTopic
+		  GatewayField.Text = gatewayID
+		  UserField.Text = username
+		  PasswordField.Text = password
+		  KeysField.Text = keys
+		  FilterField.Text = nodeFilter
+		  TLSSwitch.Value = tls
+		  ProblemLabel.Text = "Tap Save to use this feed."
+		End Sub
+	#tag EndEvent
+#tag EndEvents
+#tag Events ForgetButton
+	#tag Event
+		Sub Pressed()
+		  // Deletes the saved feed selected in the popup (the fields stay as they are)
+		  Dim idx As Integer = ProfileMenu.SelectedRowIndex
+		  If idx <= 0 Or idx > mProfiles.Count Then Return
+		  Dim d As Dictionary = mProfiles(idx - 1)
+		  Dim id As Int64 = d.Value("id").Int64Value
+		  ForgetMQTTProfile(id)
+		  LoadProfiles()
+		  ProblemLabel.Text = "Saved feed forgotten."
+		End Sub
+	#tag EndEvent
+#tag EndEvents
 #tag Events SaveButton
 	#tag Event
 		Sub Pressed()
+		  CleanFields()
 		  Dim why As String = Problem()
 		  If why <> "" Then
 		    ProblemLabel.Text = why
@@ -685,6 +936,14 @@ End
 		Group="Behavior"
 		InitialValue=""
 		Type="ColorGroup"
+		EditorType=""
+	#tag EndViewProperty
+	#tag ViewProperty
+		Name="Kind"
+		Visible=false
+		Group="Behavior"
+		InitialValue=""
+		Type="String"
 		EditorType=""
 	#tag EndViewProperty
 #tag EndViewBehavior
