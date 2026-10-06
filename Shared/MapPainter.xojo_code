@@ -125,16 +125,14 @@ Protected Class MapPainter
 		  // The position nearest to (x, y) within radius, shown in a box (see DrawHover); none when there is none that close.
 		  // True if that changed something (the control then redraws)
 		  Dim found As Integer = -1
-		  If Track <> Nil Then
-		    Dim best As Double = radius
-		    For i As Integer = 0 To Track.Count() - 1
-		      Dim d As Double = Sqrt((ScreenX(Track.Lons(i)) - x) ^ 2 + (ScreenY(Track.Lats(i)) - y) ^ 2)
-		      If d <= best Then
-		        best = d
-		        found = i
-		      End If
-		    Next
-		  End If
+		  Dim best As Double = radius
+		  For i As Integer = 0 To PointCount() - 1
+		    Dim d As Double = Sqrt((ScreenX(PointLon(i)) - x) ^ 2 + (ScreenY(PointLat(i)) - y) ^ 2)
+		    If d <= best Then
+		      best = d
+		      found = i
+		    End If
+		  Next
 		  If found = mHover Then Return False
 		  mHover = found
 		  Return True
@@ -322,21 +320,21 @@ Protected Class MapPainter
 	#tag Method, Flags = &h21
 		Private Sub ComputeView(w As Double, h As Double)
 		  // The zoom and origin that show every position with a margin (one position: street level)
-		  If Track = Nil Or Track.Count() = 0 Then
+		  If PointCount() = 0 Then
 		    mZoom = 2
 		    mOriginX = WorldX(0, mZoom) - w / 2
 		    mOriginY = WorldY(20, mZoom) - h / 2
 		    Return
 		  End If
-		  Dim minLat As Double = Track.Lats(0)
+		  Dim minLat As Double = PointLat(0)
 		  Dim maxLat As Double = minLat
-		  Dim minLon As Double = Track.Lons(0)
+		  Dim minLon As Double = PointLon(0)
 		  Dim maxLon As Double = minLon
-		  For i As Integer = 1 To Track.Count() - 1
-		    minLat = Min(minLat, Track.Lats(i))
-		    maxLat = Max(maxLat, Track.Lats(i))
-		    minLon = Min(minLon, Track.Lons(i))
-		    maxLon = Max(maxLon, Track.Lons(i))
+		  For i As Integer = 1 To PointCount() - 1
+		    minLat = Min(minLat, PointLat(i))
+		    maxLat = Max(maxLat, PointLat(i))
+		    minLon = Min(minLon, PointLon(i))
+		    maxLon = Max(maxLon, PointLon(i))
 		  Next
 		  Dim margin As Double = 48
 		  mZoom = kMaxZoom
@@ -359,18 +357,25 @@ Protected Class MapPainter
 		Private Sub DrawHover(g As Graphics, w As Double)
 		  // A box with the time, coordinates, altitude, satellites and reception of the inspected position
 		  Dim i As Integer = mHover
-		  Dim px As Double = ScreenX(Track.Lons(i))
-		  Dim py As Double = ScreenY(Track.Lats(i))
+		  Dim px As Double = ScreenX(PointLon(i))
+		  Dim py As Double = ScreenY(PointLat(i))
 		  Dim lines() As String
-		  lines.Add TimeLabel(Track.Times(i), True)
-		  lines.Add FormatValue(Track.Lats(i), "-0.000000") + ", " + FormatValue(Track.Lons(i), "-0.000000")
-		  Dim extra As String
-		  If Track.Alts(i) <> 0 Then extra = Str(Track.Alts(i)) + " m"
-		  If Track.SatCounts(i) > 0 Then extra = extra + If(extra = "", "", "  ·  ") + Str(Track.SatCounts(i)) + " sats"
-		  If Track.Precisions(i) > 0 And Track.Precisions(i) < 32 Then extra = extra + If(extra = "", "", "  ·  ") + "approximate"
-		  If extra <> "" Then lines.Add extra
-		  Dim radio As String = Track.HowReceived(i)
-		  If radio <> "" Then lines.Add radio
+		  If Spots <> Nil Then
+		    Dim described() As String = Spots.Describe(i)
+		    For Each t As String In described
+		      lines.Add(t)
+		    Next
+		  Else
+		    lines.Add TimeLabel(Track.Times(i), True)
+		    lines.Add FormatValue(Track.Lats(i), "-0.000000") + ", " + FormatValue(Track.Lons(i), "-0.000000")
+		    Dim extra As String
+		    If Track.Alts(i) <> 0 Then extra = Str(Track.Alts(i)) + " m"
+		    If Track.SatCounts(i) > 0 Then extra = extra + If(extra = "", "", "  ·  ") + Str(Track.SatCounts(i)) + " sats"
+		    If Track.Precisions(i) > 0 And Track.Precisions(i) < 32 Then extra = extra + If(extra = "", "", "  ·  ") + "approximate"
+		    If extra <> "" Then lines.Add extra
+		    Dim radio As String = Track.HowReceived(i)
+		    If radio <> "" Then lines.Add radio
+		  End If
 		  SetTextSize(g, 12, False)
 		  Dim boxWidth As Double
 		  For Each t As String In lines
@@ -429,7 +434,9 @@ Protected Class MapPainter
 		    If Not visibleTiles.HasKey(mQueue(q)) Then mQueue.RemoveAt(q)
 		  Next
 		  
-		  If Track = Nil Or Track.Count() = 0 Then
+		  If Spots <> Nil Then
+		    DrawSpots(g, w, h)
+		  ElseIf Track = Nil Or Track.Count() = 0 Then
 		    g.DrawingColor = &c495057
 		    SetTextSize(g, 14, False)
 		    Dim waiting As String = "No position yet"
@@ -480,9 +487,88 @@ Protected Class MapPainter
 		  g.DrawingColor = &c343A40
 		  g.DrawText(credit, w - cw + 5, h - 4)
 		  
-		  If mHover >= 0 And Track <> Nil And mHover < Track.Count() Then DrawHover(g, w)
+		  If mHover >= 0 And mHover < PointCount() Then DrawHover(g, w)
 		  If Not mExporting Then DrawControls(g)
 		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
+		Private Sub DrawSpots(g As Graphics, w As Double, h As Double)
+		  // A range test's readings (Spots): missed test messages as red crosses, pending ones as small grey rings, relayed
+		  // packets as grey dots with their hop count, unknown hops as grey rings, and packets heard directly on top,
+		  // coloured by SNR (RangeSpots.SnrColor)
+		  If Spots.Count() = 0 Then
+		    g.DrawingColor = &c495057
+		    SetTextSize(g, 14, False)
+		    Dim waiting As String = "No reading yet"
+		    g.DrawText(waiting, (w - g.TextWidth(waiting)) / 2, h / 2)
+		    Return
+		  End If
+		  SetTextSize(g, 10, True)
+		  For pass As Integer = 0 To 2
+		    For i As Integer = 0 To Spots.Count() - 1
+		      Dim k As Integer = Spots.Kinds(i)
+		      Dim px As Double = ScreenX(Spots.Lons(i))
+		      Dim py As Double = ScreenY(Spots.Lats(i))
+		      If pass = 0 And k = RangeSpots.kMissed Then
+		        g.DrawingColor = &cC92A2A
+		        g.PenSize = 2
+		        g.DrawLine(px - 5, py - 5, px + 5, py + 5)
+		        g.DrawLine(px - 5, py + 5, px + 5, py - 5)
+		        g.PenSize = 1
+		      ElseIf pass = 0 And k = RangeSpots.kPending Then
+		        g.DrawingColor = &cADB5BD
+		        g.DrawOval(px - 4, py - 4, 8, 8)
+		      ElseIf pass = 1 And k = RangeSpots.kRelayed Then
+		        g.DrawingColor = &cFFFFFF
+		        g.FillOval(px - 5, py - 5, 10, 10)
+		        g.DrawingColor = &c868E96
+		        g.FillOval(px - 4, py - 4, 8, 8)
+		        g.DrawingColor = &c495057
+		        g.DrawText(Str(Spots.Hops(i)), px + 6, py + 4)
+		      ElseIf pass = 1 And k = RangeSpots.kUnknownHops Then
+		        g.DrawingColor = &c868E96
+		        g.PenSize = 2
+		        g.DrawOval(px - 5, py - 5, 10, 10)
+		        g.PenSize = 1
+		      ElseIf pass = 2 And k = RangeSpots.kHeard Then
+		        Dim c As Color = &c4DABF7
+		        If Spots.Snrs(i) <> -255 Then
+		          Dim snrC As Color = RangeSpots.SnrColor(Spots.Snrs(i))
+		          c = snrC
+		        End If
+		        g.DrawingColor = &cFFFFFF
+		        g.FillOval(px - 8, py - 8, 16, 16)
+		        g.DrawingColor = c
+		        g.FillOval(px - 6, py - 6, 12, 12)
+		      End If
+		    Next
+		  Next
+		  SetTextSize(g, 12, False)
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
+		Private Function PointCount() As Integer
+		  // The points the view fits and the hover box inspects: the range spots when set, else the track
+		  If Spots <> Nil Then Return Spots.Count()
+		  If Track <> Nil Then Return Track.Count()
+		  Return 0
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
+		Private Function PointLat(i As Integer) As Double
+		  If Spots <> Nil Then Return Spots.Lats(i)
+		  Return Track.Lats(i)
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
+		Private Function PointLon(i As Integer) As Double
+		  If Spots <> Nil Then Return Spots.Lons(i)
+		  Return Track.Lons(i)
+		End Function
 	#tag EndMethod
 
 	#tag Method, Flags = &h21
@@ -580,6 +666,10 @@ Protected Class MapPainter
 
 	#tag Property, Flags = &h0
 		ControlScale As Double = 1
+	#tag EndProperty
+
+	#tag Property, Flags = &h0
+		Spots As RangeSpots
 	#tag EndProperty
 
 	#tag Property, Flags = &h0

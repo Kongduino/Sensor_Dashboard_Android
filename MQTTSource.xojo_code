@@ -209,6 +209,8 @@ Protected Class MQTTSource
 
 	#tag Method, Flags = &h21
 		Private Sub ClientSocketError(sender As MQTTClient, err As RuntimeException)
+		  // Not after Stop: closing the socket reports "Socket closed", and the card stays "off"
+		  If Not mOn Then Return
 		  If sender.IsReconnecting() Then Return
 		  LogEvents("MQTT", "Socket " + sender.ErrorDescription(err))
 		  SetStatus("error")
@@ -271,7 +273,7 @@ Protected Class MQTTSource
 		  Dim lat, lon As Double
 		  If Not ParsePosition(js, ts, lat, lon, alt, precision, sats) Then Return
 		  Dim fromNum As UInt32 = js.Lookup("from", 0).UInt64Value
-		  If fromNum <> PositionNode() Then Return
+		  If Not Hub.SameNode(fromNum, PositionNode()) Then Return
 		  If ts <= mLastPositionTime Then Return
 		  mLastPositionTime = ts
 		  Dim gatewayNum As Int64 = HexValue(mFeedID)

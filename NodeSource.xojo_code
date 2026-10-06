@@ -37,7 +37,7 @@ Protected Class NodeSource
 		  NodeSearch.RemoveAll()
 		  For i As Integer = 0 To link.NodeCount() - 1
 		    Dim num As UInt32 = link.NodeNumAt(i)
-		    If num <> mMyNum Then
+		    If Not Hub.SameNode(num, mMyNum) Then
 		      Dim longName As String = link.NodeLongNameAt(i)
 		      Dim shortName As String = link.NodeShortNameAt(i)
 		      Dim id As String = Hub.NodeText(num)
@@ -52,7 +52,7 @@ Protected Class NodeSource
 
 	#tag Method, Flags = &h0
 		Function NodeLabel(num As UInt32) As String
-		  If num = mMyNum Then Return "own sensor"
+		  If Hub.SameNode(num, mMyNum) Then Return "own sensor"
 		  Dim i As Integer = NodeNums.IndexOf(num)
 		  If i >= 0 Then Return NodeLabels(i)
 		  Return Hub.NodeText(num)
@@ -167,6 +167,11 @@ Protected Class NodeSource
 
 	#tag Method, Flags = &h21
 		Private Sub LinkConfigComplete(sender As MeshDeviceLink)
+		  // A link that isn't the current one is closed: the node takes one client, so two links would push each other off
+		  If Not (sender Is mLink) Then
+		    sender.Close()
+		    Return
+		  End If
 		  mMyNum = sender.MyNodeNum()
 		  Owner = sender.LongName()
 		  NodeCount = sender.NodeCount()
@@ -184,6 +189,7 @@ Protected Class NodeSource
 	#tag Method, Flags = &h21
 		Private Sub LinkClosed(sender As MeshDeviceLink, reason As String)
 		  // Still on: try again every 30 s (a node rebooting, or another app holding its single TCP client slot)
+		  If Not (sender Is mLink) Then Return // an earlier link: the current one is still up (see LinkConfigComplete)
 		  LogEvents("Node", "Connection closed: " + reason)
 		  mLink = Nil
 		  If Not mOn Then Return
@@ -207,6 +213,7 @@ Protected Class NodeSource
 
 	#tag Method, Flags = &h21
 		Private Sub LinkPacketReceived(sender As MeshDeviceLink, envelope As String)
+		  If Not (sender Is mLink) Then Return
 		  Dim jsonText, packetKey As String
 		  Dim summary As String = MeshPacketSummary(envelope, jsonText, packetKey)
 		  If summary = "" Then Return
@@ -261,7 +268,7 @@ Protected Class NodeSource
 		    Dim snr As Double = js.Lookup("snr", -255).DoubleValue
 		    LogTelemetry(3, Format(NodeNumber(fromNum), "0"), Format(NodeNumber(mMyNum), "0"), Str(TS), payload.ToString(), rssi, snr, MySessionNum, hops, hopStart, relayNode, viaMQTT)
 		  End If
-		  If fromNum <> ChartNode Then Return
+		  If Not Hub.SameNode(fromNum, ChartNode) Then Return
 		  UpdateData(payload.Lookup("temperature", -255).DoubleValue, payload.Lookup("relative_humidity", -255).DoubleValue, _
 		  payload.Lookup("barometric_pressure", -255).DoubleValue, TS)
 		  RaiseEvent Changed
@@ -285,7 +292,7 @@ Protected Class NodeSource
 		    mLastStoredPos.Value(key) = ts
 		    LogPosition(NodeNumber(fromNum), NodeNumber(mMyNum), ts, lat, lon, alt, precision, sats, rssi, snr, hops, hopStart, relayNode, viaMQTT)
 		  End If
-		  If fromNum = ChartNode Then
+		  If Hub.SameNode(fromNum, ChartNode) Then
 		    Track().Add(ts, lat, lon, alt, precision, sats, rssi, snr, hops, viaMQTT)
 		    RaiseEvent Changed
 		  End If

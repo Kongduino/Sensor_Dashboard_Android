@@ -154,6 +154,20 @@ Inherits MobileCanvas
 	#tag ComputedProperty, Flags = &h0
 		#tag Getter
 			Get
+			  Return Painter().Spots
+			End Get
+		#tag EndGetter
+		#tag Setter
+			Set
+			  Painter().Spots = value
+			End Set
+		#tag EndSetter
+		Spots As RangeSpots
+	#tag EndComputedProperty
+
+	#tag ComputedProperty, Flags = &h0
+		#tag Getter
+			Get
 			  Return Painter().Track
 			End Get
 		#tag EndGetter

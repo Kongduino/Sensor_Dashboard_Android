@@ -539,6 +539,12 @@ Protected Module MeshDecode
 		  mLastHopStart = hs
 		  mLastRelayNode = rn
 		  mLastViaMQTT = viaMQTT Or transport = 5 // TRANSPORT_MQTT
+		  mLastFrom = fromNode
+		  mLastPacketID = packetID
+		  Dim rr As Integer = rxRssi // as Integer / Double first (Android)
+		  Dim ss As Double = rxSnr
+		  mLastRssi = rr
+		  mLastSnr = ss
 		  
 		  // Encrypted: try the configured channel keys (see MeshAddChannel)
 		  Dim decrypted As Boolean
@@ -1024,6 +1030,18 @@ Protected Module MeshDecode
 	#tag EndMethod
 
 	#tag Method, Flags = &h0
+		Sub MeshLastPacketSignal(ByRef fromNode As UInt32, ByRef packetID As UInt32, ByRef rssi As Integer, ByRef snr As Double)
+		  // The sender, id, rx_rssi and rx_snr of the packet last decoded by MeshPacketSummary, also when it couldn't be
+		  // decrypted (no JSON then). rssi = 0 and snr = 0: not measured (e.g. the reporting node's own packet). See
+		  // MeshLastPacketRadio for whether they describe the link to the sender
+		  fromNode = mLastFrom
+		  packetID = mLastPacketID
+		  rssi = mLastRssi
+		  snr = mLastSnr
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
 		Function MeshTakeRouting(ByRef requestID As UInt32, ByRef fromNode As UInt32, ByRef toNode As UInt32, ByRef errorCode As Integer) As Boolean
 		  // After MeshPacketSummary: True (once) when the packet was a ROUTING ACK / NAK for packet requestID
 		  If Not mRoutingValid Then Return False
@@ -1277,7 +1295,23 @@ Protected Module MeshDecode
 	#tag EndProperty
 
 	#tag Property, Flags = &h21
+		Private mLastFrom As UInt32
+	#tag EndProperty
+
+	#tag Property, Flags = &h21
 		Private mLastHops As Integer = -1
+	#tag EndProperty
+
+	#tag Property, Flags = &h21
+		Private mLastPacketID As UInt32
+	#tag EndProperty
+
+	#tag Property, Flags = &h21
+		Private mLastRssi As Integer
+	#tag EndProperty
+
+	#tag Property, Flags = &h21
+		Private mLastSnr As Double
 	#tag EndProperty
 
 	#tag Property, Flags = &h21

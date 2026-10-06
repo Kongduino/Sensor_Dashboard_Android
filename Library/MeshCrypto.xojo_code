@@ -428,7 +428,10 @@ Protected Module MeshCrypto
 		  Dim mb As MemoryBlock = ProtoRawBytes(encrypted)
 		  mb.LittleEndian = True
 		  Dim extraNonce As UInt32 = mb.UInt32Value(mb.Size - 4)
-		  Return MeshCCMDecrypt(key, MeshPKINonce(packetID, fromNode, extraNonce), mb.StringValue(0, mb.Size - 4), data)
+		  Dim plain As String // not data itself: see MeshParsePSK
+		  If Not MeshCCMDecrypt(key, MeshPKINonce(packetID, fromNode, extraNonce), mb.StringValue(0, mb.Size - 4), plain) Then Return False
+		  data = plain
+		  Return True
 		End Function
 	#tag EndMethod
 
@@ -471,7 +474,10 @@ Protected Module MeshCrypto
 		  // Decrypts a PKI direct message exchanged with the node with publicKey, with our private key
 		  data = ""
 		  If Not MeshPKIReady() Then Return False
-		  Return MeshPKIDecrypt(mPKIPrivateKey, publicKey, packetID, fromNode, encrypted, data)
+		  Dim plain As String // not data itself: see MeshParsePSK
+		  If Not MeshPKIDecrypt(mPKIPrivateKey, publicKey, packetID, fromNode, encrypted, plain) Then Return False
+		  data = plain
+		  Return True
 		End Function
 	#tag EndMethod
 

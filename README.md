@@ -22,6 +22,7 @@ An M5Stack AQI device on a tablet: the temperature of its two sensors, CO₂, an
 - [Getting started](#getting-started)
 - [Sources](#sources)
 - [Screens](#screens)
+- [Range test](#range-test)
 - [Sharing](#sharing)
 - [Where things are kept](#where-things-are-kept)
 - [Repository layout](#repository-layout)
@@ -73,6 +74,18 @@ A source that was on when you left the app starts again the next time you open i
   - The tabs share the screen's width, so they fit on a phone as well as a tablet.
   - **Settings** in the toolbar opens the source's settings.
 - The screen stays on while a source is on: the app collects data only while it's in the foreground.
+
+## Range test
+
+How far a test device can send and receive, measured against a gateway node at home: the **Range test** card.
+
+- **Gateway → device:** the gateway is the Meshtastic node card's node (over TCP). **Send** makes it broadcast "Message from !<gateway> #<n>" on the test channel with **hop limit 0**, so only a device in direct range can hear it. The test device, paired with the phone's Meshtastic app, uploads what it hears to MQTT through the app (**MQTT client proxy**); the app follows those uploads (`<root>/2/e/+/!<device>`, with the MQTT card's broker and keys). A message reported back is *heard*, with the device's RSSI / SNR; one not reported within 2 minutes is *missed*. Send waits 5 seconds between messages: the firmware refuses texts sent closer together, and a message the gateway refuses is marked *failed* and left off the map.
+- **Device → gateway:** every packet of the test device the gateway hears (positions, replies…), with the gateway's RSSI / SNR. When the device sends the same packet twice (it heard no node rebroadcast it, a sign of a weak link), the Log tab says *repeated*.
+- **Where:** each reading is placed at the phone's position (location permission, asked once; it needs a GPS, which many tablets don't have), else at the device's last reported position if its fix is at most 15 minutes old. For a walk, set the test device to broadcast its position often (for example `position.position_broadcast_secs` 60; the default is an hour).
+- **Maps:** one per direction. Packets heard directly are coloured by SNR (red at −20 dB, yellow around −7, green from +5); relayed packets are grey dots with their hop count, unknown hops grey rings, missed messages red crosses. Tap a point for its details. Earlier tests between the same gateway and device are shown too. The **Log** tab lists the latest readings.
+- **Share:** a CSV of every reading (direction, status, RSSI, SNR, hops, relay node, position and its source) and the current map.
+
+Before testing: on the gateway, LoRa **OK to MQTT** on (otherwise the device doesn't upload the gateway's packets); on the test device, MQTT on with **proxy to client**, uplink on the test channel, and the same channel and key as the gateway. On **both** nodes, turn **downlink off** on the test channel: otherwise each gets the other's packets back from the broker before the radio copy, drops the radio copy as a duplicate, and nothing is measured. Keep the phone connected to the device by Bluetooth during the test, and the device off a computer's USB (while a computer client was connected over USB, the device's own packets weren't uploaded). The gateway accepts one TCP client: turning the range test on turns the node card off, and the other way round.
 
 ## Sharing
 

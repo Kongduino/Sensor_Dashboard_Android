@@ -134,6 +134,11 @@ Protected Module SensorData
 		  MySensordb.ExecuteSQL("CREATE TABLE IF NOT EXISTS positions(posID INTEGER PRIMARY KEY, sessionID INTEGER, " + _
 		  "timestamp INTEGER, fromID INTEGER, senderID INTEGER, latitude REAL, longitude REAL, altitude INTEGER, " + _
 		  "precisionBits INTEGER, sats INTEGER, rssi INTEGER, snr REAL);")
+		  // Range tests: one row per packet between a gateway node and a test device (see LogRange)
+		  MySensordb.ExecuteSQL("CREATE TABLE IF NOT EXISTS rangetest(rtID INTEGER PRIMARY KEY, sessionID INTEGER, timestamp INTEGER, " + _
+		  "gatewayID INTEGER, deviceID INTEGER, direction INTEGER, status TEXT, method TEXT, packetID INTEGER, seq INTEGER, label TEXT, " + _
+		  "rssi INTEGER, snr REAL, hops INTEGER, hopStart INTEGER, relayNode INTEGER, viaMQTT INTEGER, " + _
+		  "latitude REAL, longitude REAL, altitude INTEGER, posSource TEXT);")
 		  // One-time repairs of data an earlier Android version stored wrongly (nothing to do on desktop): node numbers above
 		  // 2^31 stored as negative numbers (see NodeNumber), and AQI readings stored with device 0 (Val("&H…") is 0 on Android)
 		  Try
@@ -235,6 +240,110 @@ Protected Module SensorData
 		  Catch e As DatabaseException
 		    LogEvents "LogPosition", "Database error: " + e.Message
 		  End Try
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Function LogRange(gatewayID As Int64, deviceID As Int64, direction As Integer, status As String, method As String, packetID As UInt32, seq As Integer, label As String, rssi As Integer, snr As Double, hops As Integer, hopStart As Integer, relayNode As Integer, viaMQTT As Boolean, lat As Double, lon As Double, alt As Integer, posSource As String) As Int64
+		  // One range-test row; returns its rtID (0 on error). direction: 1 gateway -> device, 2 device -> gateway.
+		  // status: "heard", "sent" (a test message not reported yet), "missed". method: "mqtt" (the device's upload) or
+		  // "tcp" (the gateway's link). seq: the test message's number (0 for other packets). posSource: "phone", "device",
+		  // or "" (no position: latitude / longitude NULL). rssi / snr -255 when unknown; hops -1 unknown (NULL)
+		  Dim position As String = "NULL, NULL, NULL"
+		  If posSource <> "" Then position = FormatValue(lat, "-0.0000000") + ", " + FormatValue(lon, "-0.0000000") + ", " + Str(alt)
+		  Dim cmd As String = "INSERT INTO rangetest(sessionID, timestamp, gatewayID, deviceID, direction, status, method, packetID, seq, label, " + _
+		  "rssi, snr, hops, hopStart, relayNode, viaMQTT, latitude, longitude, altitude, posSource) VALUES (" + _
+		  Str(MySessionNum) + ", " + Format(DateTime.Now().SecondsFrom1970, "0") + ", " + Format(gatewayID, "0") + ", " + Format(deviceID, "0") + ", " + _
+		  Str(direction) + ", " + SQLText(status) + ", " + SQLText(method) + ", " + Format(NodeNumber(packetID), "0") + ", " + Str(seq) + ", " + SQLText(label) + ", " + _
+		  Str(rssi) + ", " + FormatValue(snr, "-0.00") + ", " + HopsSQL(hops, hopStart, relayNode, viaMQTT) + ", " + position + ", " + SQLText(posSource) + ");"
+		  LogEvents "LogRange", cmd
+		  Try
+		    MySensordb.ExecuteSQL(cmd)
+		    Dim rs As RowSet = MySensordb.SelectSQL("SELECT last_insert_rowid() AS id;")
+		    Return rs.Column("id").Int64Value
+		  Catch e As DatabaseException
+		    LogEvents "LogRange", "Database error: " + e.Message
+		    Return 0
+		  End Try
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Sub UpdateRange(rtID As Int64, status As String, rssi As Integer, snr As Double, hops As Integer, hopStart As Integer, relayNode As Integer, viaMQTT As Boolean)
+		  // A sent test message reported by the device ("heard", with its reception) or given up on ("missed")
+		  Dim h As String = "NULL"
+		  If hops >= 0 Then h = Str(hops)
+		  Dim cmd As String = "UPDATE rangetest SET status=" + SQLText(status) + ", method='mqtt', rssi=" + Str(rssi) + ", snr=" + FormatValue(snr, "-0.00") + _
+		  ", hops=" + h + ", hopStart=" + Str(hopStart) + ", relayNode=" + Str(relayNode) + ", viaMQTT=" + If(viaMQTT, "1", "0") + _
+		  " WHERE rtID=" + Format(rtID, "0") + ";"
+		  LogEvents "UpdateRange", cmd
+		  Try
+		    MySensordb.ExecuteSQL(cmd)
+		  Catch e As DatabaseException
+		    LogEvents "UpdateRange", "Database error: " + e.Message
+		  End Try
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Function RangeRows(gatewayID As Int64, deviceID As Int64) As RowSet
+		  // Every range-test row of this gateway and device (all sessions), oldest first
+		  Try
+		    Return MySensordb.SelectSQL("SELECT * FROM rangetest WHERE gatewayID=" + Format(gatewayID, "0") + " AND deviceID=" + Format(deviceID, "0") + _
+		    " ORDER BY timestamp, rtID;")
+		  Catch e As DatabaseException
+		    LogEvents "RangeRows", "Database error: " + e.Message
+		    Return Nil
+		  End Try
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Function SQLText(t As String) As String
+		  // A text value for SQL, quoted
+		  Return "'" + t.ReplaceAll("'", "''") + "'"
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Sub WriteRangeCSV(rs As RowSet, fi As FolderItem)
+		  // A range test as ";"-separated text, one row per packet, oldest first. rssi / snr describe the link only when
+		  // hops is 0 and via_mqtt 0; a sent test message nobody reported has status "missed" (or "sent" while waiting)
+		  If fi.Exists Then fi.Remove()
+		  Dim tos As TextOutputStream = TextOutputStream.Create(fi)
+		  tos.WriteLine("timestamp;direction;status;method;seq;label;packet_id;rssi;snr;hops;relay_node;via_mqtt;latitude;longitude;altitude;position_source")
+		  Dim t() As String
+		  rs.MoveToFirstRow()
+		  While Not rs.AfterLastRow
+		    t.RemoveAll()
+		    Dim dt As New DateTime(rs.Column("timestamp").IntegerValue)
+		    t.Add(dt.SQLDateTime)
+		    t.Add(If(rs.Column("direction").IntegerValue = 1, "gateway->device", "device->gateway"))
+		    t.Add(rs.Column("status").StringValue)
+		    t.Add(rs.Column("method").StringValue)
+		    t.Add(If(rs.Column("seq").IntegerValue > 0, rs.Column("seq").StringValue, ""))
+		    t.Add(rs.Column("label").StringValue)
+		    t.Add(rs.Column("packetID").StringValue)
+		    t.Add(If(rs.Column("rssi").IntegerValue = -255, "", rs.Column("rssi").StringValue))
+		    t.Add(If(rs.Column("snr").DoubleValue = -255, "", FormatValue(rs.Column("snr").DoubleValue, "-0.00")))
+		    t.Add(If(rs.Column("hops").Value.IsNull, "", rs.Column("hops").StringValue))
+		    Dim relay As Integer = rs.Column("relayNode").IntegerValue
+		    t.Add(If(relay = 0, "", HexText(relay, 2).Lowercase))
+		    t.Add(If(rs.Column("viaMQTT").IntegerValue = 1, "1", "0"))
+		    If rs.Column("latitude").Value.IsNull Then
+		      t.Add("")
+		      t.Add("")
+		      t.Add("")
+		    Else
+		      t.Add(FormatValue(rs.Column("latitude").DoubleValue, "-0.0000000"))
+		      t.Add(FormatValue(rs.Column("longitude").DoubleValue, "-0.0000000"))
+		      t.Add(rs.Column("altitude").StringValue)
+		    End If
+		    t.Add(rs.Column("posSource").StringValue)
+		    tos.WriteLine(String.FromArray(t, ";"))
+		    rs.MoveToNextRow()
+		  Wend
+		  tos.Close()
 		End Sub
 	#tag EndMethod
 

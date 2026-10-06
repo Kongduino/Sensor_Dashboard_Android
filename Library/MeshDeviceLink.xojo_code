@@ -66,13 +66,16 @@ Protected Class MeshDeviceLink
 		      RaiseEvent PacketReceived(MeshBin(ProtoFieldBytes(1, packet) + ProtoFieldBytes(3, MeshNodeID(mMyNodeNum))))
 		    Case 3
 		      If wireType <> 2 Then Return
-		      ParseMyInfo(r.ReadMessage)
+		      Dim myInfo As ProtoReader = r.ReadMessage
+		      If myInfo <> Nil Then ParseMyInfo(myInfo) // Nil: malformed or cut short
 		    Case 4
 		      If wireType <> 2 Then Return
-		      ParseNodeInfo(r.ReadMessage)
+		      Dim nodeInfo As ProtoReader = r.ReadMessage
+		      If nodeInfo <> Nil Then ParseNodeInfo(nodeInfo)
 		    Case 6
 		      If wireType <> 2 Then Return
 		      Dim logRecord As ProtoReader = r.ReadMessage
+		      If logRecord = Nil Then Return
 		      Dim f2, w2 As Integer
 		      While logRecord.ReadTag(f2, w2)
 		        If f2 = 1 And w2 = 2 Then
@@ -206,6 +209,24 @@ Protected Class MeshDeviceLink
 		End Function
 	#tag EndMethod
 
+	#tag Method, Flags = &h0
+		Function SendText(text As String, channelIndex As Integer = 0, hopLimit As Integer = 0, toNode As UInt32 = &hFFFFFFFF) As UInt32
+		  // A text message (TEXT_MESSAGE_APP, portnum 1) the device sends as itself: to everyone (toNode &hFFFFFFFF) or one
+		  // node, on its channel channelIndex, without ACK. hopLimit 0: only nodes in direct range get it (the firmware keeps
+		  // a client's hop_limit 0 when no ACK is asked; such a packet arrives with hop_start 0). Returns the packet id
+		  // (0 if not connected)
+		  If Not mOpen Then Return 0
+		  Dim packetID As UInt32 = MeshNewPacketID()
+		  // Data: 1 portnum, 2 payload
+		  Dim data As String = MeshBin(ProtoFieldVarint(1, 1) + ProtoFieldBytes(2, text.ConvertEncoding(Encodings.UTF8)))
+		  // MeshPacket: 2 to, 3 channel, 4 decoded, 6 id, 9 hop_limit (the device fills in from)
+		  Dim packet As String = MeshBin(ProtoFieldFixed32(2, toNode) + ProtoFieldVarint(3, channelIndex) + ProtoFieldBytes(4, data) + _
+		  ProtoFieldFixed32(6, packetID) + ProtoFieldVarint(9, hopLimit))
+		  SendToRadio(ProtoFieldBytes(1, packet)) // ToRadio.packet
+		  Return packetID
+		End Function
+	#tag EndMethod
+
 	#tag Method, Flags = &h21
 		Private Sub ParseMyInfo(r As ProtoReader)
 		  // MyNodeInfo: 1 my_node_num
@@ -231,6 +252,7 @@ Protected Class MeshDeviceLink
 		      num = r.ReadVarint()
 		    ElseIf field = 2 And wireType = 2 Then
 		      Dim user As ProtoReader = r.ReadMessage
+		      If user = Nil Then Return // malformed or cut short
 		      Dim f2, w2 As Integer
 		      While user.ReadTag(f2, w2)
 		        If f2 = 2 And w2 = 2 Then

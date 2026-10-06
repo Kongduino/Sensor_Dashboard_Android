@@ -1,7 +1,7 @@
 #tag Module
 Protected Module Hub
 	#tag Note, Name = About
-		The Android app's state, independent of the screens: the three sources (connections, samples, tracks), the
+		The Android app's state, independent of the screens: the three sources and the range test (connections, samples, tracks), the
 		settings (settings.json) and the database. Screens only show it, so closing a screen never drops a connection.
 	#tag EndNote
 
@@ -13,6 +13,7 @@ Protected Module Hub
 		  MQTT.Resume()
 		  Node.Resume()
 		  AQI.Resume()
+		  Range.Resume()
 		End Sub
 	#tag EndMethod
 
@@ -48,8 +49,14 @@ Protected Module Hub
 		  MQTT = New MQTTSource
 		  Node = New NodeSource
 		  AQI = New AQISource
+		  Range = New RangeTestSource
 		  If SettingBool("mqtt_on") And MQTT.IsConfigured() Then MQTT.Start()
-		  If SettingBool("device_on") And Node.IsConfigured() Then Node.Start()
+		  // The node and the range test share the gateway's single TCP client slot: the range test wins
+		  If SettingBool("range_on") And Range.IsConfigured() Then
+		    Range.Start()
+		  ElseIf SettingBool("device_on") And Node.IsConfigured() Then
+		    Node.Start()
+		  End If
 		  If SettingBool("aqi_on") And AQI.IsConfigured() Then AQI.Start()
 		End Sub
 	#tag EndMethod
@@ -59,6 +66,7 @@ Protected Module Hub
 		  If MQTT <> Nil And MQTT.IsOn() Then Return True
 		  If Node <> Nil And Node.IsOn() Then Return True
 		  If AQI <> Nil And AQI.IsOn() Then Return True
+		  If Range <> Nil And Range.IsOn() Then Return True
 		  Return False
 		End Function
 	#tag EndMethod
@@ -153,6 +161,21 @@ Protected Module Hub
 		End Function
 	#tag EndMethod
 
+	#tag Method, Flags = &h0
+		Function IDText(id As UInt32) As String
+		  // A packet id as an unsigned number: Str of a UInt32 above 2^31 is negative on Android (see SameNode)
+		  Return Str(NodeNumber(id))
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Function SameNode(a As UInt32, b As UInt32) As Boolean
+		  // Node numbers compared through NodeNumber: on Android a UInt32 above 2^31 from a protobuf is sign-extended while
+		  // one made from a hex setting (HexValue) isn't, so a plain = can say !aabbccdd <> !aabbccdd
+		  Return NodeNumber(a) = NodeNumber(b)
+		End Function
+	#tag EndMethod
+
 	#tag Property, Flags = &h0
 		AQI As AQISource
 	#tag EndProperty
@@ -167,6 +190,10 @@ Protected Module Hub
 
 	#tag Property, Flags = &h0
 		Node As NodeSource
+	#tag EndProperty
+
+	#tag Property, Flags = &h0
+		Range As RangeTestSource
 	#tag EndProperty
 
 	#tag Property, Flags = &h0

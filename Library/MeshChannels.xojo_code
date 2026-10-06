@@ -104,22 +104,45 @@ Protected Module MeshChannels
 
 	#tag Method, Flags = &h0
 		Function MeshDecodeBase64Strict(s As String, ByRef bytes As String) As Boolean
-		  // Only well-formed base64 (A-Z a-z 0-9 + /, padded to a multiple of 4)
-		  Dim re As New RegEx
-		  re.SearchPattern = "^[A-Za-z0-9+/]+={0,2}$"
-		  If re.Search(s) = Nil Or s.Length Mod 4 <> 0 Then Return False
-		  bytes = DecodeBase64(s)
+		  // Only well-formed base64 (A-Z a-z 0-9 + /, padded to a multiple of 4). Checked character by character, not
+		  // with a RegEx: on Android the RegEx version turned a valid base64 key into 0 bytes. The decoded size is checked too
+		  Dim n As Integer = s.Length
+		  If n = 0 Or n Mod 4 <> 0 Then Return False
+		  Dim padding As Integer = 0
+		  For i As Integer = 0 To n - 1
+		    Dim ch As String = s.Middle(i, 1)
+		    Dim c As Integer = ch.Asc()
+		    If c = 61 Then // "=": only at the end, at most two
+		      padding = padding + 1
+		      If i < n - 2 Then Return False
+		    ElseIf padding > 0 Then
+		      Return False
+		    ElseIf Not ((c >= 65 And c <= 90) Or (c >= 97 And c <= 122) Or (c >= 48 And c <= 57) Or c = 43 Or c = 47) Then
+		      Return False
+		    End If
+		  Next
+		  Dim decoded As String = DecodeBase64(s)
+		  decoded = MeshBin(decoded)
+		  If decoded.Bytes <> (n \ 4) * 3 - padding Then Return False
+		  bytes = decoded
 		  Return True
 		End Function
 	#tag EndMethod
 
 	#tag Method, Flags = &h0
 		Function MeshDecodeHexStrict(s As String, ByRef bytes As String) As Boolean
-		  // Only an even number of hex digits
-		  Dim re As New RegEx
-		  re.SearchPattern = "^([0-9a-fA-F]{2})+$"
-		  If re.Search(s) = Nil Then Return False
-		  bytes = DecodeHex(s)
+		  // Only an even number of hex digits, checked character by character (see MeshDecodeBase64Strict)
+		  Dim n As Integer = s.Length
+		  If n = 0 Or n Mod 2 <> 0 Then Return False
+		  For i As Integer = 0 To n - 1
+		    Dim ch As String = s.Middle(i, 1)
+		    Dim c As Integer = ch.Asc()
+		    If Not ((c >= 48 And c <= 57) Or (c >= 65 And c <= 70) Or (c >= 97 And c <= 102)) Then Return False
+		  Next
+		  Dim decoded As String = DecodeHex(s)
+		  decoded = MeshBin(decoded)
+		  If decoded.Bytes <> n \ 2 Then Return False
+		  bytes = decoded
 		  Return True
 		End Function
 	#tag EndMethod
@@ -205,10 +228,21 @@ Protected Module MeshChannels
 		    pskBytes = MeshBin(String.ChrByte(1))
 		    Return True
 		  End If
-		  If s.BeginsWith("base64:") Then Return MeshDecodeBase64Strict(s.Middle(7), pskBytes)
-		  If s.BeginsWith("0x") Then Return MeshDecodeHexStrict(s.Middle(2), pskBytes)
-		  If MeshDecodeHexStrict(s, pskBytes) Then Return True
-		  Return MeshDecodeBase64Strict(s, pskBytes)
+		  // Decoded into a local variable: on Android, a ByRef parameter passed on to another ByRef parameter
+		  // doesn't get the value back
+		  Dim decoded As String
+		  Dim ok As Boolean
+		  If s.BeginsWith("base64:") Then
+		    ok = MeshDecodeBase64Strict(s.Middle(7), decoded)
+		  ElseIf s.BeginsWith("0x") Then
+		    ok = MeshDecodeHexStrict(s.Middle(2), decoded)
+		  ElseIf MeshDecodeHexStrict(s, decoded) Then
+		    ok = True
+		  Else
+		    ok = MeshDecodeBase64Strict(s, decoded)
+		  End If
+		  If ok Then pskBytes = decoded
+		  Return ok
 		End Function
 	#tag EndMethod
 

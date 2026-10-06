@@ -5,7 +5,10 @@ Protected Module MeshSend
 		  // A ROUTING ACK (error_reason NONE) for packet requestID, as a node sends it (MeshModule::allocAckNak):
 		  // to the original sender, request_id = its packet id, channel-encrypted (ROUTING is never PKI). "" when OK
 		  Dim routing As String = ProtoFieldVarint(3, 0) // Routing.error_reason = NONE (oneof, so encoded even when 0)
-		  Return MeshBuildEnvelope(channelName, gatewayID, fromNode, toNode, MeshNewPacketID(), 3, 5, routing, envelope, False, requestID)
+		  Dim built As String // not envelope itself: see MeshParsePSK
+		  Dim problem As String = MeshBuildEnvelope(channelName, gatewayID, fromNode, toNode, MeshNewPacketID(), 3, 5, routing, built, False, requestID)
+		  envelope = built
+		  Return problem
 		End Function
 	#tag EndMethod
 
@@ -246,7 +249,12 @@ Protected Module MeshSend
 	#tag Method, Flags = &h0
 		Function MeshJSONNodeNum(v As Variant, ByRef num As UInt32) As Boolean
 		  // A node number from JSON: an integer, or a string like "!aabbccdd"
-		  If v.Type = Variant.TypeString Then Return MeshParseNodeID(v.StringValue, num)
+		  If v.Type = Variant.TypeString Then
+		    Dim parsed As UInt32 // not num itself: see MeshParsePSK
+		    If Not MeshParseNodeID(v.StringValue, parsed) Then Return False
+		    num = parsed
+		    Return True
+		  End If
 		  If v.Type <> Variant.TypeInt32 And v.Type <> Variant.TypeInt64 And v.Type <> Variant.TypeDouble Then Return False
 		  Dim n As Int64 = v.Int64Value
 		  If n < 0 Or n > 4294967295 Then Return False

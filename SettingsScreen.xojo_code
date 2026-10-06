@@ -414,6 +414,15 @@ End
 		    KeysField.Text = Hub.Setting("mqtt_keys")
 		    FilterField.Text = Hub.Setting("mqtt_node_filter")
 		    TLSSwitch.Value = Hub.SettingBool("mqtt_tls")
+		  Case "range"
+		    Self.Title = "Range test"
+		    HelpLabel.Text = "The gateway is the Meshtastic node card's node; the broker is the MQTT card's. The test device uploads what it hears through the phone's Meshtastic app (MQTT proxy)."
+		    GatewayField.Hint = "Test device ID (!aabbccdd)"
+		    PortField.Hint = "Gateway channel for the test message (0 = primary)"
+		    rows.Add(GatewayField)
+		    rows.Add(PortField)
+		    GatewayField.Text = Hub.Setting("range_device")
+		    PortField.Text = Hub.Setting("range_channel")
 		  Case "device"
 		    Self.Title = "Meshtastic node"
 		    HelpLabel.Text = "A node on your network (TCP). Close the Meshtastic app first: a node takes one client at a time."
@@ -472,6 +481,11 @@ End
 		  Case "device"
 		    If HostField.Text.Trim = "" Then Return "The node's address is missing."
 		    If PortField.Text.Trim <> "" And Val(PortField.Text) <= 0 Then Return "The port is a number (4403 by default)."
+		  Case "range"
+		    If Hub.Setting("device_host") = "" Then Return "Set up the Meshtastic node card first: its node is the gateway."
+		    If Hub.Setting("mqtt_broker") = "" Then Return "Set up the MQTT card first: the test device's uploads come through its broker."
+		    If Not Hub.IsHexID(GatewayField.Text, 8) Then Return "The test device ID is 8 hex digits, like !aabbccdd."
+		    If PortField.Text.Trim <> "" And (Val(PortField.Text) < 0 Or Val(PortField.Text) > 7) Then Return "The channel is a number from 0 to 7."
 		  Case "aqi"
 		    If Not Hub.IsHexID(DeviceField.Text, 12) Then Return "The device ID is 12 hex digits."
 		  End Select
@@ -502,6 +516,16 @@ End
 		    If Hub.Node.IsOn() Then
 		      Hub.Node.Stop()
 		      Hub.Node.Start()
+		    End If
+		  Case "range"
+		    Dim device As String = GatewayField.Text.Trim.Lowercase
+		    If Not device.BeginsWith("!") Then device = "!" + device
+		    Hub.SetSetting("range_device", device)
+		    Dim channelText As String = Str(Val(PortField.Text))
+		    Hub.SetSetting("range_channel", channelText)
+		    If Hub.Range.IsOn() Then
+		      Hub.Range.Stop()
+		      Hub.Range.Start()
 		    End If
 		  Case "aqi"
 		    Hub.SetSetting("aqi_device_id", DeviceField.Text.Trim.Uppercase)

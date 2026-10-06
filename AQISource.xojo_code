@@ -42,6 +42,11 @@ Protected Class AQISource
 		    mTimer = New Timer
 		    AddHandler mTimer.Run, WeakAddressOf PollNow
 		  End If
+		  If mErrorTimer = Nil Then
+		    // Created here, on the main thread: HandleError runs on a background thread (see there)
+		    mErrorTimer = New Timer
+		    AddHandler mErrorTimer.Run, WeakAddressOf ShowNetworkError
+		  End If
 		  mTimer.Period = 60000
 		  mTimer.RunMode = Timer.RunModes.Multiple
 		  SetStatus("connecting")
@@ -100,8 +105,20 @@ Protected Class AQISource
 
 	#tag Method, Flags = &h21
 		Private Sub HandleError(sender As URLConnection, e As RuntimeException)
+		  // On Android, URLConnection.Error runs on a background thread: the screens may not be updated from here (setting a
+		  // switch crashed the app). The status is shown from mErrorTimer, on the main thread
 		  mBusy = False
 		  LogEvents("AQI", "Network error: " + e.Message)
+		  If mErrorTimer <> Nil Then
+		    mErrorTimer.Period = 10
+		    mErrorTimer.RunMode = Timer.RunModes.Single
+		  End If
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
+		Private Sub ShowNetworkError(sender As Timer)
+		  If Not mOn Then Return
 		  SetStatus("network error, retrying")
 		End Sub
 	#tag EndMethod
@@ -315,6 +332,10 @@ Protected Class AQISource
 
 	#tag Property, Flags = &h21
 		Private mStarted As Boolean
+	#tag EndProperty
+
+	#tag Property, Flags = &h21
+		Private mErrorTimer As Timer
 	#tag EndProperty
 
 	#tag Property, Flags = &h21

@@ -513,7 +513,10 @@ Protected Module MeshJSON
 		    mb = payload
 		    Return MeshMessageJSON(New ProtoReader(mb), "1:wifi_count:u:a,2:ble_count:u:a,3:uptime:u:a")
 		  Case 2
-		    Return MeshHardwareJSON(payload, typeName)
+		    Dim hardwareType As String // not typeName itself: see MeshParsePSK
+		    Dim hardwareJSON As String = MeshHardwareJSON(payload, hardwareType)
+		    typeName = hardwareType
+		    Return hardwareJSON
 		  Else
 		    Return ""
 		  End Select
@@ -573,7 +576,9 @@ Protected Module MeshJSON
 		  // other neighbour, as Python's repr() does. best = "" for zero. False if outside MeshExactDigits' range
 		  Dim digits As String
 		  Dim pointPos As Integer
-		  If Not MeshExactDigits(d, digits, pointPos, negative) Then Return False
+		  Dim isNegative As Boolean // not negative itself: see MeshParsePSK
+		  If Not MeshExactDigits(d, digits, pointPos, isNegative) Then Return False
+		  negative = isNegative
 		  best = digits
 		  bestExp = pointPos - 1
 		  If digits = "" Then Return True
