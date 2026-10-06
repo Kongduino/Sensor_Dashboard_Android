@@ -121,6 +121,8 @@ Protected Class RangeTestSource
 		  mDeviceNum = deviceNum
 		  mGatewayNum = 0
 		  mConfigTime = 0
+		  mKeptSet(1) = False
+		  mKeptSet(2) = False
 		  mPendingRow = New Dictionary
 		  mPendingTime = New Dictionary
 		  mPendingSeq = New Dictionary
@@ -288,6 +290,7 @@ Protected Class RangeTestSource
 	#tag Method, Flags = &h21
 		Private Sub CreateLink()
 		  DropLink()
+		  mConfigTime = 0 // see LinkClosed
 		  mLink = New MeshDeviceLink
 		  AddHandler mLink.ConfigComplete, WeakAddressOf LinkConfigComplete
 		  AddHandler mLink.LinkClosed, WeakAddressOf LinkClosed
@@ -321,6 +324,7 @@ Protected Class RangeTestSource
 		  If Not (sender Is mLink) Then Return // an earlier link: the current one is still up (see LinkConfigComplete)
 		  LogEvents("Range", "Gateway connection closed: " + reason)
 		  mLink = Nil
+		  mConfigTime = 0 // the next link replays old packets until its configuration is complete: not readings
 		  If Not mOn Then Return
 		  If mRetry = Nil Then
 		    mRetry = New Timer
@@ -505,6 +509,20 @@ Protected Class RangeTestSource
 		  Dim lat, lon As Double
 		  Dim alt As Integer
 		  Dim source As String = Position(lat, lon, alt)
+		  // Automatic packets (positions, telemetry, nodeinfo...) taken where an earlier one of this direction was kept
+		  // add nothing to the map: dropped. Texts (replies) are always kept
+		  If label <> "text" And source <> "" Then
+		    If mKeptSet(direction) Then
+		      Dim metres As Double = MetresBetween(mKeptLat(direction), mKeptLon(direction), lat, lon)
+		      If metres < kMinSpotMetres Then
+		        LogEvents("Range", If(direction = 1, "→ device  ", "→ gateway  ") + label + " dropped: " + Format(metres, "0") + " m from the previous one")
+		        Return
+		      End If
+		    End If
+		    mKeptSet(direction) = True
+		    mKeptLat(direction) = lat
+		    mKeptLon(direction) = lon
+		  End If
 		  Call LogRange(NodeNumber(mGatewayNum), NodeNumber(mDeviceNum), direction, "heard", method, packetID, 0, label, _
 		  rssi, snr, hops, hopStart, relayNode, viaMQTT, lat, lon, alt, source)
 		  Dim kind As Integer = SpotKind(hops, viaMQTT)
@@ -537,6 +555,7 @@ Protected Class RangeTestSource
 	#tag Method, Flags = &h21
 		Private Sub RetryNow(sender As Timer)
 		  If Not mOn Then Return
+		  If mLink <> Nil Then Return // a link is already being opened (the retry timer was once seen firing twice at once)
 		  CreateLink()
 		  UpdateStatus()
 		End Sub
@@ -547,6 +566,18 @@ Protected Class RangeTestSource
 		  Status = text
 		  RaiseEvent Changed
 		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
+		Private Function MetresBetween(lat1 As Double, lon1 As Double, lat2 As Double, lon2 As Double) As Double
+		  // Distance on the ground, flat-earth approximation (fine for the tens of metres it's used for)
+		  Const kEarthMetres = 6371000.0
+		  Const kRadians = 0.017453292519943295
+		  Dim midLat As Double = (lat1 + lat2) / 2 * kRadians
+		  Dim dx As Double = (lon2 - lon1) * kRadians * Cos(midLat) * kEarthMetres
+		  Dim dy As Double = (lat2 - lat1) * kRadians * kEarthMetres
+		  Return Sqrt(dx * dx + dy * dy)
+		End Function
 	#tag EndMethod
 
 	#tag Method, Flags = &h21
@@ -793,6 +824,18 @@ Protected Class RangeTestSource
 	#tag EndProperty
 
 	#tag Property, Flags = &h21
+		Private mKeptLat(2) As Double
+	#tag EndProperty
+
+	#tag Property, Flags = &h21
+		Private mKeptLon(2) As Double
+	#tag EndProperty
+
+	#tag Property, Flags = &h21
+		Private mKeptSet(2) As Boolean
+	#tag EndProperty
+
+	#tag Property, Flags = &h21
 		Private mLastSendTime As Integer
 	#tag EndProperty
 
@@ -842,6 +885,9 @@ Protected Class RangeTestSource
 
 
 	#tag Constant, Name = kDeviceFixSeconds, Type = Double, Dynamic = False, Default = \"900", Scope = Private
+	#tag EndConstant
+
+	#tag Constant, Name = kMinSpotMetres, Type = Double, Dynamic = False, Default = \"30", Scope = Private
 	#tag EndConstant
 
 	#tag Constant, Name = kMinSendSeconds, Type = Double, Dynamic = False, Default = \"5", Scope = Private
