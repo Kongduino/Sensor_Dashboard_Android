@@ -61,7 +61,7 @@ A source that was on when you left the app starts again the next time you open i
 | Source | Settings | Notes |
 |---|---|---|
 | **MQTT feed** | broker (`host` or `host:port`), root topic (for example `msh/EU_868`), the gateway's node ID (`!aabbccdd`), user and password, channel keys, an optional single node, TLS | Subscribes to `<root topic>/2/e/+/!<gateway>`, as the desktop app does. The root topic is the prefix only, without `#` or `+`. Channel keys: `Name=base64` entries separated by `;`; a key without a name is used for the other channels; empty means the default key (`AQ==`). |
-| **Meshtastic node** | address (or `usb`), port (4403) | A node accepts one TCP client at a time: close the Meshtastic app (or anything else connected to the node) first. With `usb`, the node plugged into the phone or tablet is used (Android asks to allow it, then the card connects on its next try). The node's own sensor is charted by default; any node it knows can be picked. |
+| **Meshtastic node** | address (or `usb`), port (4403) | A node accepts one TCP client at a time: close the Meshtastic app (or anything else connected to the node) first. With `usb`, the node plugged into the phone or tablet is used: plugging it in opens the app with the USB permission granted ([XojoUsbAttach](https://github.com/Kongduino/XojoUsbAttach); choose **Always** the first time), and the card connects on its next try. The node's own sensor is charted by default; any node it knows can be picked. |
 | **M5Stack AQI** | the device ID (12 hex digits) | Polled at the device's own interval (at most every minute). |
 
 ## Screens
@@ -149,7 +149,6 @@ Xojo translates Android projects to Kotlin, and some code that's fine on desktop
 ## Limitations
 
 - The app collects data only while it's on screen (no background service).
-- Android asks for permission to use a USB node each time it's plugged in.
 - MQTT TLS encrypts the connection but doesn't verify the broker's certificate (Xojo's SSLSocket).
 - Sharing several files gives one zip.
 

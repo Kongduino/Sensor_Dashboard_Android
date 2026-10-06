@@ -1,25 +1,5 @@
 #tag Class
 Protected Class USBSerial
-	#tag Note, Name = About
-		A USB serial port for Xojo Android, through usb-serial-for-android (MIT, github.com/mik3y/usb-serial-for-android):
-		CDC-ACM (nRF52, RP2040, ESP32-S3 native USB...), CP210x, CH34x, FTDI and PL2303 chips.
-
-		The project needs, in Build Settings → Android, the Dependencies line:
-		  implementation 'com.github.mik3y:usb-serial-for-android:3.11.0'
-
-		Use:
-		  Dim names() As String = USBSerial.Devices()  // each: name, Tab, vid:pid, Tab, driver, Tab, product
-		  If Not USBSerial.HasPermission(name) Then Call USBSerial.RequestPermission(name)  // Android asks the user
-		  Dim port As New USBSerial
-		  AddHandler port.DataAvailable, ...   // binary data, one byte per character
-		  If port.Open(name, 115200) Then Call port.Write(bytes)
-
-		Reading is polled by a Timer (declares can't take a listener with a byte array), every PollMilliseconds, with a
-		10 ms read timeout. Bytes cross the declares as Base64 text. Binary Strings use the one-byte-per-character form
-		(see Bin): the same rule as the MQTT_Xojo library's MeshBin.
-	#tag EndNote
-
-
 	#tag Method, Flags = &h21
 		Private Shared Function Bin(s As String) As String
 		  // Binary data, one byte per character (on Android a String made by concatenation or decoding is tagged UTF-8
@@ -47,6 +27,13 @@ Protected Class USBSerial
 		  mName = ""
 		  mReadErrors = 0
 		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Function DeviceName() As String
+		  // The open device's name ("" when closed)
+		  Return mName
+		End Function
 	#tag EndMethod
 
 	#tag Method, Flags = &h0
@@ -96,13 +83,6 @@ Protected Class USBSerial
 	#tag Method, Flags = &h0
 		Function IsOpen() As Boolean
 		  Return mPort <> Nil
-		End Function
-	#tag EndMethod
-
-	#tag Method, Flags = &h0
-		Function DeviceName() As String
-		  // The open device's name ("" when closed)
-		  Return mName
 		End Function
 	#tag EndMethod
 
@@ -191,7 +171,8 @@ Protected Class USBSerial
 
 	#tag Method, Flags = &h0
 		Function Write(data As String) As Boolean
-		  // Sends binary data (one byte per character, see Bin); False on error (see LastError)
+		  // Sends binary data (one byte per character, see Bin);
+		  // False on error (see LastError)
 		  If mPort = Nil Then
 		    mLastError = "not open"
 		    Return False
@@ -221,6 +202,29 @@ Protected Class USBSerial
 	#tag Hook, Flags = &h0
 		Event Error(message As String)
 	#tag EndHook
+
+
+	#tag Note, Name = About
+		A USB serial port for Xojo Android, through usb-serial-for-android (MIT, github.com/mik3y/usb-serial-for-android):
+		CDC-ACM (nRF52, RP2040, ESP32-S3 native USB...), CP210x, CH34x, FTDI and PL2303 chips.
+		
+		The project needs, in Build Settings → Android → Dependencies, the line (Xojo adds "implementation"):
+		  com.github.mik3y:usb-serial-for-android:3.11.0
+		Add com.github.Kongduino:XojoUsbAttach:1.0.0 too, and plugging a device in opens the app with the permission
+		already granted (github.com/Kongduino/XojoUsbAttach).
+		
+		Use:
+		  Dim names() As String = USBSerial.Devices()  // each: name, Tab, vid:pid, Tab, driver, Tab, product
+		  If Not USBSerial.HasPermission(name) Then Call USBSerial.RequestPermission(name)  // Android asks the user
+		  Dim port As New USBSerial
+		  AddHandler port.DataAvailable, ...   // binary data, one byte per character
+		  If port.Open(name, 115200) Then Call port.Write(bytes)
+		
+		Reading is polled by a Timer (declares can't take a listener with a byte array), every PollMilliseconds, with a
+		10 ms read timeout. Bytes cross the declares as Base64 text.
+		Binary Strings use the one-byte-per-character form
+		(see Bin): the same rule as the MQTT_Xojo library's MeshBin.
+	#tag EndNote
 
 
 	#tag Property, Flags = &h21
@@ -290,6 +294,14 @@ Protected Class USBSerial
 			Visible=true
 			Group="Position"
 			InitialValue="0"
+			Type="Integer"
+			EditorType=""
+		#tag EndViewProperty
+		#tag ViewProperty
+			Name="PollMilliseconds"
+			Visible=false
+			Group="Behavior"
+			InitialValue="50"
 			Type="Integer"
 			EditorType=""
 		#tag EndViewProperty
