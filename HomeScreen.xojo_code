@@ -163,6 +163,25 @@ Begin MobileScreen HomeScreen
       Visible         =   True
       Width           =   64
    End
+   Begin SourceCard CardSoil
+      AccessibilityHint=   ""
+      AccessibilityLabel=   ""
+      CardTitle       =   ""
+      DetailText      =   ""
+      Enabled         =   True
+      Height          =   100
+      Left            =   16
+      LockBottom      =   False
+      LockedInPosition=   False
+      LockLeft        =   True
+      LockRight       =   True
+      LockTop         =   True
+      Scope           =   2
+      StatusText      =   ""
+      Top             =   472
+      Visible         =   True
+      Width           =   328
+   End
    Begin MobileLabel NoteLabel
       AccessibilityHint=   ""
       AccessibilityLabel=   ""
@@ -183,7 +202,7 @@ Begin MobileScreen HomeScreen
       TextColor       =   &c00000000
       TextFont        =   ""
       TextSize        =   0
-      Top             =   480
+      Top             =   588
       Visible         =   True
       Width           =   328
    End
@@ -206,6 +225,7 @@ End
 		  CardNode.CardTitle = "Meshtastic node"
 		  CardAQI.CardTitle = "M5Stack AQI"
 		  CardRange.CardTitle = "Range test"
+		  CardSoil.CardTitle = "Soil"
 		  AddHandler Hub.MQTT.Changed, WeakAddressOf MQTTChanged
 		  AddHandler Hub.Node.Changed, WeakAddressOf NodeChanged
 		  AddHandler Hub.AQI.Changed, WeakAddressOf AQIChanged
@@ -257,8 +277,34 @@ End
 		  ShowSource(CardNode, SwitchNode, Hub.Node.IsConfigured(), Hub.Node.IsOn(), Hub.Node.Status, Hub.Node.Describe(), Hub.Node.Latest)
 		  ShowSource(CardAQI, SwitchAQI, Hub.AQI.IsConfigured(), Hub.AQI.IsOn(), Hub.AQI.Status, Hub.AQI.Describe(), Hub.AQI.Latest)
 		  ShowSource(CardRange, SwitchRange, Hub.Range.IsConfigured(), Hub.Range.IsOn(), Hub.Range.Status, Hub.Range.Describe(), Hub.Range.Latest)
+		  ShowSoil()
 		  mUpdating = False
 		  Hub.KeepAwake(CardMQTT, Hub.AnyOn())
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
+		Private Sub ShowSoil()
+		  // The Soil card: not a source of its own (no switch), the soil readings the MQTT feed and the node card stored.
+		  // Its latest node and reading
+		  Dim rs As RowSet = SoilNodes()
+		  If rs = Nil Or rs.AfterLastRow Then
+		    CardSoil.StatusText = "No soil readings yet"
+		    CardSoil.DetailText = "They appear when a node sends some, through the MQTT feed or the node card"
+		  Else
+		    Dim num As Int64 = rs.Column("fromID").Int64Value
+		    Dim nodeCount As Integer = 0
+		    While Not rs.AfterLastRow
+		      nodeCount = nodeCount + 1
+		      rs.MoveToNextRow()
+		    Wend
+		    Dim id As UInt32 = num
+		    Dim nodesText As String = If(nodeCount = 1, "1 node", Str(nodeCount) + " nodes")
+		    CardSoil.StatusText = "Soil readings: " + nodesText + " · latest " + Hub.NodeText(id)
+		    Dim summary As String = SoilSummary(num)
+		    CardSoil.DetailText = summary
+		  End If
+		  CardSoil.Refresh()
 		End Sub
 	#tag EndMethod
 
@@ -399,6 +445,16 @@ End
 		Sub ValueChanged()
 		  If mUpdating Then Return
 		  Toggle("aqi", Me.Value)
+		End Sub
+	#tag EndEvent
+#tag EndEvents
+#tag Events CardSoil
+	#tag Event
+		Sub Pressed()
+		  // The soil readings, per node and metric
+		  Dim s As New SourceScreen
+		  s.Kind = "soil"
+		  s.Show()
 		End Sub
 	#tag EndEvent
 #tag EndEvents

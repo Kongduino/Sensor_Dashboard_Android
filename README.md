@@ -23,6 +23,7 @@ An M5Stack AQI device on a tablet: the temperature of its two sensors, CO₂, an
 - [Sources](#sources)
 - [Screens](#screens)
 - [Range test](#range-test)
+- [Soil](#soil)
 - [Sharing](#sharing)
 - [Where things are kept](#where-things-are-kept)
 - [Repository layout](#repository-layout)
@@ -38,6 +39,7 @@ An M5Stack AQI device on a tablet: the temperature of its two sensors, CO₂, an
   - an **M5Stack AQI** device, through M5Stack's ezdata service
 - **Charts** with a time axis and a fitted Y axis: temperature, humidity and pressure; the radio (RSSI / SNR) of an MQTT feed, for packets the gateway heard directly (a relayed packet's values describe the last relay, so only its hop count is kept); CO2, VOC and particulate matter (as bars) for the AQI. Tap a chart, or slide along it, to read a sample's values.
 - **A map** of a node's positions on OpenStreetMap: drag, pinch, double-tap, and the +/−/Fit buttons; tap a point for its time, coordinates, altitude, satellites and reception.
+- **Soil readings** (soil temperature and moisture) of any node, from the MQTT and node cards: a **Soil** card with a chart per metric and a node picker (see [Soil](#soil)).
 - **Storage** in a local SQLite database, so the charts start with earlier readings.
 - **Sharing**: the readings (CSV), the positions (CSV and GPX) and the chart or map (PNG), through Android's share sheet.
 
@@ -86,6 +88,16 @@ How far a test device can send and receive, measured against a gateway node at h
 - **Share:** a CSV of every reading (direction, status, RSSI, SNR, hops, relay node, position and its source) and the current map.
 
 Before testing: on the gateway, LoRa **OK to MQTT** on (otherwise the device doesn't upload the gateway's packets); on the test device, MQTT on with **proxy to client**, uplink on the test channel, and the same channel and key as the gateway. On **both** nodes, turn **downlink off** on the test channel: otherwise each gets the other's packets back from the broker before the radio copy, drops the radio copy as a duplicate, and nothing is measured. Keep the phone connected to the device by Bluetooth during the test, and the device off a computer's USB (while a computer client was connected over USB, the device's own packets weren't uploaded). The gateway accepts one TCP client: turning the range test on turns the node card off, and the other way round. Any other app connected to the gateway over the network, the Meshtastic app included (even on the same tablet), keeps pushing the range test off: disconnect it first.
+
+## Soil
+
+Soil telemetry (Meshtastic `EnvironmentMetrics`: `soil_temperature` and `soil_moisture`) from any node is stored whenever the MQTT card or the node card receives it, whatever the MQTT card's node filter. A packet with soil readings only doesn't reach the temperature charts.
+
+- **The Soil card** has no switch: it shows what the other two cards received, the latest soil node and its latest reading.
+- **Tapping it** opens one tab per metric (Soil °C, Moisture %) for the node chosen in the picker (the nodes that sent soil readings, with their number of readings), from every stored reading of both cards.
+- **Share** gives a CSV (time, then one column per metric) and the chart.
+
+Other soil metrics (pH, conductivity, N/P/K…) are one entry each in `Shared/SoilData`'s table once the library decodes them.
 
 ## Sharing
 

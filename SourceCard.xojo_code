@@ -48,7 +48,8 @@ Inherits MobileCanvas
 		Private Function StatusColor(dark As Boolean) As Color
 		  // Green when connected, orange while connecting or retrying, grey when off, red on a problem
 		  Dim t As String = StatusText.Lowercase
-		  If t.BeginsWith("connected") Then Return If(dark, &c69DB7C, &c2B8A3E)
+		  If t.BeginsWith("connected") Or t.BeginsWith("soil readings") Then Return If(dark, &c69DB7C, &c2B8A3E)
+		  If t.BeginsWith("no soil") Then Return If(dark, &cADB5BD, &c868E96)
 		  If t.BeginsWith("off") Or t.BeginsWith("set up") Then Return If(dark, &cADB5BD, &c868E96)
 		  If t.IndexOf("connecting") >= 0 Or t.IndexOf("retrying") >= 0 Then Return If(dark, &cFFA94D, &cE8590C)
 		  Return If(dark, &cFF8787, &cC92A2A)

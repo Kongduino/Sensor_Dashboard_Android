@@ -232,10 +232,15 @@ Protected Class MQTTSource
 		  End If
 		  If kind <> "telemetry" Then Return
 		  Dim fromNum As UInt32 = js.Lookup("from", 0).UInt64Value
-		  If mNodeFilter <> 0 And fromNum <> mNodeFilter Then Return
 		  Dim payload As JSONItem
 		  If Not ChildObject(js, "payload", payload) Then Return
-		  If Not payload.HasKey("temperature") Then Return // device metrics, not the sensor
+		  // Environment readings (temperature...) of the followed node are stored and charted; soil readings of any node
+		  // are stored for the Soil card, whatever the node filter. Device metrics are neither
+		  Dim hasEnvironment As Boolean = payload.HasKey("temperature")
+		  Dim hasSoil As Boolean = HasSoilData(payload)
+		  If Not hasEnvironment And Not hasSoil Then Return
+		  Dim followed As Boolean = (mNodeFilter = 0) Or Hub.SameNode(fromNum, mNodeFilter)
+		  If Not followed And Not hasSoil Then Return
 		  Dim rssi As Double = js.Lookup("rssi", -255).DoubleValue
 		  Dim snr As Double = js.Lookup("snr", -255).DoubleValue
 		  Dim TS As Integer = js.Lookup("timestamp", 0).IntegerValue
@@ -260,7 +265,7 @@ Protected Class MQTTSource
 		    chartRssi = rssi
 		    chartSnr = snr
 		  End If
-		  UpdateData(chartRssi, chartSnr, temp, rh, pa, TS)
+		  If followed And hasEnvironment Then UpdateData(chartRssi, chartSnr, temp, rh, pa, TS)
 		  LogTelemetry(2, Format(NodeNumber(fromNum), "0"), senderID, Str(TS), payload.ToString(), rssi, snr, MySessionNum, hops, hopStart, relayNode, viaMQTT)
 		  RaiseEvent Changed
 		End Sub

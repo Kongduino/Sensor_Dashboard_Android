@@ -254,7 +254,10 @@ Protected Class NodeSource
 		  If kind <> "telemetry" Then Return
 		  Dim payload As JSONItem
 		  If Not ChildObject(js, "payload", payload) Then Return
-		  If Not payload.HasKey("temperature") Then Return
+		  // Environment readings (temperature...) and soil readings are stored; device metrics aren't
+		  Dim hasEnvironment As Boolean = payload.HasKey("temperature")
+		  Dim hasSoil As Boolean = HasSoilData(payload)
+		  If Not hasEnvironment And Not hasSoil Then Return
 		  Dim fromNum As UInt32 = js.Lookup("from", 0).UInt64Value
 		  Dim TS As Integer = js.Lookup("timestamp", 0).IntegerValue
 		  If TS <= 0 Then
@@ -273,10 +276,13 @@ Protected Class NodeSource
 		    Dim snr As Double = js.Lookup("snr", -255).DoubleValue
 		    LogTelemetry(3, Format(NodeNumber(fromNum), "0"), Format(NodeNumber(mMyNum), "0"), Str(TS), payload.ToString(), rssi, snr, MySessionNum, hops, hopStart, relayNode, viaMQTT)
 		  End If
-		  If Not Hub.SameNode(fromNum, ChartNode) Then Return
-		  UpdateData(payload.Lookup("temperature", -255).DoubleValue, payload.Lookup("relative_humidity", -255).DoubleValue, _
-		  payload.Lookup("barometric_pressure", -255).DoubleValue, TS)
-		  RaiseEvent Changed
+		  // Charted: the charted node's environment readings. Changed also for soil readings (the Soil card follows them)
+		  Dim charted As Boolean = hasEnvironment And Hub.SameNode(fromNum, ChartNode)
+		  If charted Then
+		    UpdateData(payload.Lookup("temperature", -255).DoubleValue, payload.Lookup("relative_humidity", -255).DoubleValue, _
+		    payload.Lookup("barometric_pressure", -255).DoubleValue, TS)
+		  End If
+		  If charted Or hasSoil Then RaiseEvent Changed
 		End Sub
 	#tag EndMethod
 

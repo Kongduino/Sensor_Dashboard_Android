@@ -26,6 +26,7 @@ Class=ChartPainter;Shared/ChartPainter.xojo_code;&h000000004B7E2FFF;&h000000005D
 Class=MapPainter;Shared/MapPainter.xojo_code;&h0000000044D19FFF;&h000000005D3A1FFF;false
 Class=RangeSpots;Shared/RangeSpots.xojo_code;&h00000000151E2FFF;&h000000005D3A1FFF;false
 Module=SensorData;Shared/SensorData.xojo_code;&h00000000612C4FFF;&h000000005D3A1FFF;false
+Module=SoilData;Shared/SoilData.xojo_code;&h000000004F1C3FFF;&h000000005D3A1FFF;false
 Folder=Library;Library;&h00000000134E0FFF;&h0000000000000000;false
 Module=MeshJSON;Library/MeshJSON.xojo_code;&h00000000319D37FF;&h00000000134E0FFF;false
 Module=MeshDecode;Library/MeshDecode.xojo_code;&h00000000150B8FFF;&h00000000134E0FFF;false
