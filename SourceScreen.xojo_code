@@ -469,9 +469,17 @@ End
 		      Dim zipped As FolderItem = folder.Zip(zipTarget, True)
 		      toShare = zipped
 		    End If
+		    // In the event log, like the desktop exports: what was shared
+		    Dim names() As String
+		    For Each f As FolderItem In files
+		      names.Add(f.Name)
+		    Next
+		    Dim sep As String = ", "
+		    LogEvents("Share", "Sharing " + toShare.Name + ": " + String.FromArray(names, sep))
 		    mSharing = New MobileSharingPanel
 		    mSharing.ShareFile(toShare, Self)
 		  Catch e As RuntimeException
+		    LogEvents("Share", "Share failed: " + e.Message)
 		    InfoLabel.Text = "Share failed: " + e.Message
 		  End Try
 		End Sub
